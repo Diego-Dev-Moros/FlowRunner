@@ -1,0 +1,77 @@
+# --- Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+.eggs/
+dist/
+build/
+wheels/
+*.whl
+
+# Virtualenvs / env vars
+.venv/
+venv/
+env/
+ENV/
+.env
+.env.*
+*.env
+
+# Logs & tmp
+*.log
+logs/
+*.pid
+tmp/
+.cache/
+
+# Tests / coverage / tooling
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+.mypy_cache/
+.pytype/
+.ruff_cache/
+.dmypy.json
+.pyre/
+
+# IDEs/Editors
+.vscode/
+.idea/
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Selenium drivers (binarios)
+drivers/
+**/chromedriver*
+**/geckodriver*
+**/msedgedriver*
+
+# Eel / empaquetado (PyInstaller)
+*.spec
+
+# Front opcional (si usás tooling)
+node_modules/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Artefactos opcionales de datos (descomenta si querés ignorarlos)
+# out/
+# data/
+# *.csv
+# *.xlsx
