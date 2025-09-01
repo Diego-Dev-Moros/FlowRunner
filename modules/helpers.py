@@ -7,6 +7,11 @@ import inspect
 
 from config import ACTION_SPECS, StepSpec
 
+# --- ids típicos que prefieres bloquear en “modo local” (selenium/web) ---
+BLOCK_IF_BLOQUEADO: Set[str] = {
+    "abrir_pagina", "cambiar_pagina", "cerrar_navegador",
+    "maximizar_app", "minimizar_app", "hacer_clic",
+}
 
 @dataclass
 class RuntimeState:
@@ -92,10 +97,6 @@ def build_kwargs(spec: StepSpec, node_props: Dict[str, Any], runtime: RuntimeSta
     # Inyecciones
     if 'driver' in (spec.inject or []) and 'driver' in sig.parameters:
         kwargs['driver'] = runtime.driver
-        if runtime.driver is None:
-            # No hay driver; algunas funciones podrían crearlo internamente, pero normalmente es error
-            # No lanzamos excepción aquí; dejamos que la función falle si es necesario
-            pass
 
     if 'contexto' in (spec.inject or []) and 'contexto' in sig.parameters:
         kwargs['contexto'] = runtime.contexto
@@ -109,6 +110,7 @@ def execute_flow(flow: Dict[str, Any],
     """
     Ejecuta el flow: { steps: [...], edges: [...] }
     Devuelve el 'contexto' resultante.
+    Emite progreso con payload que puede incluir: stepId, message, level, preview, status
     """
     steps: List[Dict[str, Any]] = flow.get('steps', []) or []
     edges: List[Dict[str, str]] = flow.get('edges', []) or []
@@ -121,6 +123,18 @@ def execute_flow(flow: Dict[str, Any],
         node_id = node.get('id')
         props = node.get('props', {}) or {}
 
+        # Bloqueo local (si props trae bloqueado="sí")
+        if str(props.get('bloqueado', 'no')).strip().lower() in ('si', 'sí', 'true', '1'):
+            if type_id in BLOCK_IF_BLOQUEADO:
+                _emit(on_progress, {
+                    'stepId': node_id,
+                    'message': f"Saltado {type_id} (bloqueado)",
+                    'level': 'warn',
+                    'preview': '',
+                    'status': 'WARNING'
+                })
+                continue
+
         spec = ACTION_SPECS.get(type_id)
         if not spec:
             _emit(on_progress, {'stepId': node_id, 'message': f"Saltando acción desconocida: {type_id}", 'level': 'warn'})
@@ -131,22 +145,43 @@ def execute_flow(flow: Dict[str, Any],
         try:
             kwargs = build_kwargs(spec, props, runtime, func)
         except Exception as e:
-            _emit(on_progress, {'stepId': node_id, 'message': f"Error preparando args de {type_id}: {e}", 'level': 'error'})
+            _emit(on_progress, {
+                'stepId': node_id, 'message': f"Error preparando args de {type_id}: {e}",
+                'level': 'error', 'status': 'ERROR'
+            })
             raise
 
-        _emit(on_progress, {'stepId': node_id, 'message': f"Ejecutando {type_id} ({i}/{len(ordered_steps)})", 'level': 'info'})
+        _emit(on_progress, {
+            'stepId': node_id,
+            'message': f"Ejecutando {type_id} ({i}/{len(ordered_steps)})",
+            'level': 'info'
+        })
 
         # Llamada
         result = func(**kwargs)
 
+        # Si el callable retorna dict con message/preview/status, lo usamos
+        msg = f"Completado {type_id}"
+        preview = ''
+        status = 'OK'
+        if isinstance(result, dict):
+            msg = result.get('message', msg)
+            preview = result.get('preview', '')
+            status = result.get('status', status)
+
         # Post-proceso: driver
         if spec.provides == 'driver':
-            # Si la acción abre/retorna un driver, guardarlo
-            runtime.driver = result
+            runtime.driver = result if not isinstance(result, dict) else result.get('driver', runtime.driver)
         if spec.clear_driver:
             runtime.driver = None
 
-        _emit(on_progress, {'stepId': node_id, 'message': f"Completado {type_id}", 'level': 'success'})
+        _emit(on_progress, {
+            'stepId': node_id,
+            'message': msg,
+            'level': 'success',
+            'preview': preview,
+            'status': status
+        })
 
     return runtime.contexto
 

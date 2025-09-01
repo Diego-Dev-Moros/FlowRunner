@@ -367,3 +367,14 @@ body{
   #sidebar{ order:2; }
   #main{ order:1; }
 }
+/* El hint no debe bloquear el mouse */
+.canvas-hint {
+  pointer-events: none;
+}
+
+/* Alinear caret y título en la cabecera del grupo del sidebar */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}

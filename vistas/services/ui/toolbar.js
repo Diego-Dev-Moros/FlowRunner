@@ -1,47 +1,102 @@
-import { CAT_TITLES } from '../config.js';
+// vistas/services/ui/toolbar.js
+import * as registry from '../registry.js';
 
-const storeKey = (cat) => `fr.collapsed.${cat}`;
+/**
+ * Renderiza la barra lateral con grupos colapsables.
+ * Muestra SOLO las acciones habilitadas (según backend → registry.bootstrapFlags()).
+ */
+export async function renderToolbar() {
+  const sidebar = document.getElementById('sidebar');
+  if (!sidebar) return;
 
-export function renderSidebar(registry) {
-  const side = document.getElementById('sidebar');
-  side.innerHTML = '';
+  // Limpia y carga flags de habilitación
+  sidebar.innerHTML = '';
+  await registry.bootstrapFlags();
 
-  const defaultCollapsed = true; // 👈 arranca todo colapsado
+  const groups = registry.listByCategory(); // solo habilitadas
 
-  for (const [cat, defs] of registry.byCat.entries()) {
-    const wrap = document.createElement('section');
-    wrap.className = 'cat';
+  // Orden opcional de categorías
+  const order = ['inicio', 'proceso', 'cierre', 'basicas', 'lectura', 'escritura'];
+  const catKeys = Object.keys(groups).sort((a, b) => {
+    const ia = order.indexOf(a); const ib = order.indexOf(b);
+    if (ia === -1 && ib === -1) return a.localeCompare(b);
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    return ia - ib;
+  });
 
-    // Si no hay preferencia guardada, usamos el default (=colapsado)
-    const pref = localStorage.getItem(storeKey(cat));
-    const startCollapsed = (pref === null) ? defaultCollapsed : pref === '1';
-    if (startCollapsed) wrap.classList.add('cat-collapsed');
+  catKeys.forEach(cat => {
+    const defs = groups[cat] || [];
+    if (!defs.length) return;
 
-    const h = document.createElement('h4');
-    const title = registry.catTitles?.[cat] || CAT_TITLES?.[cat] || cat;
-    h.innerHTML = `<span class="chev"></span>${title}`;
-    h.addEventListener('click', () => {
-      wrap.classList.toggle('cat-collapsed');
-      localStorage.setItem(storeKey(cat), wrap.classList.contains('cat-collapsed') ? '1' : '0');
+    const section = document.createElement('section');
+    section.className = 'func-group';
+
+    // Header colapsable
+    const header = document.createElement('div');
+    header.className = 'sidebar-header';
+    Object.assign(header.style, {
+      cursor: 'pointer',
+      userSelect: 'none',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '6px',
+      padding: '6px 0'
     });
-    wrap.appendChild(h);
 
-    const ul = document.createElement('div');
-    ul.className = 'tool-list';
+    const caret = document.createElement('span');
+    caret.textContent = '▸';
+    caret.style.color = '#666';
+    caret.style.flex = '0 0 auto';
 
+    const h = document.createElement('h2');
+    h.textContent = tituloCategoria(cat);
+    h.style.margin = '0';
+    h.style.fontSize = '1rem';
+    h.style.lineHeight = '1.2';
+
+    const list = document.createElement('div');
+    list.className = 'tool-list';
+    list.style.display = 'none'; // todas colapsadas al inicio
+
+    header.addEventListener('click', () => {
+      const isOpen = list.style.display !== 'none';
+      list.style.display = isOpen ? 'none' : 'grid';
+      caret.textContent = isOpen ? '▸' : '▾';
+    });
+
+    header.appendChild(caret);
+    header.appendChild(h);
+    section.appendChild(header);
+    section.appendChild(list);
+    sidebar.appendChild(section);
+
+    // Items (botones arrastrables)
     defs.forEach(def => {
       const btn = document.createElement('button');
       btn.className = 'tool-item';
-      btn.textContent = def.nombre;
-      btn.title = def.descripcion || '';
+      btn.type = 'button';
+      btn.textContent = def.nombre || def.id;
       btn.draggable = true;
-      btn.addEventListener('dragstart', ev => {
-        ev.dataTransfer.setData('text/defId', def.id);
-      });
-      ul.appendChild(btn);
-    });
+      btn.dataset.type = def.id;
 
-    wrap.appendChild(ul);
-    side.appendChild(wrap);
-  }
+      btn.addEventListener('dragstart', (ev) => {
+        ev.dataTransfer.setData('text/plain', def.id);
+      });
+
+      list.appendChild(btn);
+    });
+  });
+}
+
+function tituloCategoria(key) {
+  const map = {
+    inicio: 'Acciones de Inicio',
+    proceso: 'Acciones de Proceso',
+    cierre: 'Acciones de Cierre',
+    basicas: 'Funciones Básicas',
+    lectura: 'Acciones de Lectura',
+    escritura: 'Acciones de Escritura',
+  };
+  return map[key] || key.charAt(0).toUpperCase() + key.slice(1);
 }

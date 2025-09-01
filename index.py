@@ -5,6 +5,7 @@ import shutil
 import eel
 from eel import browsers
 from modules.funciones.extras import run_flow as engine_run_flow  # motor de ejecución
+import modules.config as appcfg
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 eel.init(BASE_DIR, allowed_extensions=['.js', '.html', '.css'])
@@ -40,6 +41,13 @@ def pause_run():
     print('PAUSE_RUN (pendiente)')
     return True
 
+@eel.expose
+def get_enabled_types():
+    try:
+        enabled = getattr(appcfg, 'ENABLED_TYPES', set()) or set()
+        return list(enabled)
+    except Exception:
+        return []
 
 # -------------------------
 # Navegador: CHROME (app) -> EDGE (app) -> normal -> sin navegador

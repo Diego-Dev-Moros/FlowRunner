@@ -1,66 +1,44 @@
-# modules/funciones/archivos/lectura.py
-import csv
+import os
 import pandas as pd
-from typing import List, Dict, Any
 
-# Leer CSV → lista de dicts
-def leer_csv(ruta_csv: str) -> List[Dict[str, Any]]:
-    with open(ruta_csv, newline='', encoding='utf-8') as csvfile:
-        reader = csv.DictReader(csvfile)
-        if reader.fieldnames is None:
-            # Si no hay encabezado, generamos campos genéricos
-            csvfile.seek(0)
-            raw_reader = csv.reader(csvfile)
-            rows = list(raw_reader)
-            if not rows:
-                return []
-            headers = [f"col{i+1}" for i in range(len(rows[0]))]
-            return [dict(zip(headers, r)) for r in rows]
-        return [row for row in reader]
+def leer_csv(ruta: str, **kwargs):
+    if not os.path.exists(ruta):
+        raise FileNotFoundError(ruta)
+    df = pd.read_csv(ruta, **{k:v for k,v in kwargs.items() if v not in (None, "")})
+    return df
 
-# Leer Excel → lista de dicts
-def leer_excel(ruta_excel: str, hoja: str):
-    df = pd.read_excel(ruta_excel, sheet_name=hoja, engine='openpyxl')
-    return df.to_dict(orient='records')
+def leer_excel(ruta: str, hoja: str, **kwargs):
+    if not os.path.exists(ruta):
+        raise FileNotFoundError(ruta)
+    df = pd.read_excel(ruta, sheet_name=hoja, engine="openpyxl")
+    return df
 
-# Leer TXT delimitado → lista de dicts
-def leer_txt_delimitado(ruta_txt: str, delimitador: str):
-    with open(ruta_txt, 'r', encoding='utf-8') as f:
-        # Intentar DictReader (requiere encabezado). Si falla, convertir manualmente.
-        sample = f.read(4096)
-        f.seek(0)
-        sniffer = csv.Sniffer()
-        try:
-            has_header = sniffer.has_header(sample)
-        except Exception:
-            has_header = True
-        if has_header:
-            reader = csv.DictReader(f, delimiter=delimitador)
-            return [row for row in reader]
-        else:
-            r = csv.reader(f, delimiter=delimitador)
-            rows = list(r)
-            if not rows:
-                return []
-            headers = [f"col{i+1}" for i in range(len(rows[0]))]
-            return [dict(zip(headers, row)) for row in rows]
+def leer_txt(ruta: str, delimitador: str = ",", **kwargs):
+    if not os.path.exists(ruta):
+        raise FileNotFoundError(ruta)
+    df = pd.read_csv(ruta, sep=delimitador)
+    return df
 
-# # Main de prueba
-# def main():
-#     user_PC = getpass.getuser()
+# NUEVO: Excel parcial
+def excel_leer_rango(ruta: str, hoja: str, rango: str | None = None, columnas: str | None = None):
+    """Lee rango A1:D100 o columnas por nombre (coma separada)."""
+    if not os.path.exists(ruta):
+        raise FileNotFoundError(ruta)
 
-#     ruta_csv = fr"C:\Users\{user_PC}\OneDrive - PwC\ITC IT Seniors - Equipo 5\Archivos ejemplo\extracted_invoice_data.csv"
-#     ruta_excel = fr"C:\Users\{user_PC}\OneDrive - PwC\ITC IT Seniors - Equipo 5\Archivos ejemplo\Reporte general.xlsx"
-#     ruta_txt = fr"C:\Users\{user_PC}\OneDrive - PwC\ITC IT Seniors - Equipo 5\Archivos ejemplo\archivo_delimitado.txt"
+    if rango:
+        from openpyxl import load_workbook
+        wb = load_workbook(ruta, read_only=True, data_only=True)
+        ws = wb[hoja]
+        cells = ws[rango]
+        data = [[c.value for c in row] for row in cells]
+        wb.close()
+        # cabecera si la primera fila parece texto
+        if data and all(isinstance(x, (str, type(None))) for x in data[0]):
+            return pd.DataFrame(data[1:], columns=[str(x) if x is not None else "" for x in data[0]])
+        return pd.DataFrame(data)
 
-#     print("CSV:")
-#     print(leer_csv(ruta_csv)[:2])  # Mostrar primeros 2 registros
-
-#     print("\nExcel:")
-#     print(leer_excel(ruta_excel, "Reporte")[:2])
-
-#     print("\nTXT:")
-#     print(leer_txt_delimitado(ruta_txt, ",")[:2])
-
-# if __name__ == "__main__":
-#     main()
+    df = pd.read_excel(ruta, sheet_name=hoja, engine="openpyxl")
+    if columnas:
+        cols = [c.strip() for c in columnas.split(",") if c.strip()]
+        df = df[cols]
+    return df

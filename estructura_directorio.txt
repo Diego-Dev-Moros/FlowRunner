@@ -3,18 +3,40 @@
 ├─ LICENSE
 ├─ NOTICE
 ├─ README.md
+├─ estructura_directorio.txt
+├─ flujo_exportado.json
 ├─ index.py
 ├─ modules
+│   ├─ __pycache__
+│   │   └─ config.cpython-311.pyc
 │   ├─ config.py
 │   ├─ funciones
 │   │   ├─ __pycache__
+│   │   │   ├─ dialogos.cpython-311.pyc
 │   │   │   └─ extras.cpython-311.pyc
+│   │   ├─ acciones
+│   │   │   ├─ __pycache__
+│   │   │   │   ├─ control.cpython-311.pyc
+│   │   │   │   ├─ dialogos_wrappers.cpython-311.pyc
+│   │   │   │   ├─ fs.cpython-311.pyc
+│   │   │   │   ├─ io_read.cpython-311.pyc
+│   │   │   │   ├─ io_write.cpython-311.pyc
+│   │   │   │   └─ web.cpython-311.pyc
+│   │   │   ├─ control.py
+│   │   │   ├─ dialogos_wrappers.py
+│   │   │   ├─ fs.py
+│   │   │   ├─ io_read.py
+│   │   │   ├─ io_write.py
+│   │   │   └─ web.py
 │   │   ├─ archivos
 │   │   │   ├─ __pycache__
 │   │   │   │   ├─ escritura.cpython-311.pyc
+│   │   │   │   ├─ gestor.cpython-311.pyc
 │   │   │   │   └─ lectura.cpython-311.pyc
 │   │   │   ├─ escritura.py
+│   │   │   ├─ gestor.py
 │   │   │   └─ lectura.py
+│   │   ├─ dialogos.py
 │   │   ├─ extras.py
 │   │   ├─ navegador
 │   │   │   ├─ __pycache__
@@ -41,7 +63,8 @@
     │   └─ ui
     │       ├─ console.js
     │       ├─ properties.js
-    │       └─ toolbar.js
+    │       ├─ toolbar.js
+    │       └─ topbar.js
     ├─ servicio.html
     └─ styles
         └─ estilos.css

@@ -32,6 +32,7 @@ function clearDOMAndState() {
   document.querySelectorAll('#lienzo .node').forEach(n => n.remove());
   state.steps = [];
   state.edges = [];
+  state.results = {};
   state.seq = 1;
   state.selectedStepId = null;
   state.lastStepId = null;
