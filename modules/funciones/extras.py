@@ -1,175 +1,230 @@
 # modules/funciones/extras.py
 from __future__ import annotations
-from typing import Any, Dict, List, Optional
+from typing import Dict, Any, List, Optional, Callable
+from dataclasses import dataclass
 import traceback
 
-# acciones por dominio
-from modules.funciones.acciones import control as act_ctrl
-from modules.funciones.acciones import dialogos_wrappers as act_dlg
+# Acciones modulares
+from modules.funciones.acciones import fs as act_fs
 from modules.funciones.acciones import io_read as act_read
 from modules.funciones.acciones import io_write as act_write
-from modules.funciones.acciones import fs as act_fs
-try:
-    from modules.funciones.acciones import web as act_web
-except Exception:
-    act_web = None
+from modules.funciones.acciones import web as act_web
+from modules.funciones.acciones import control as act_ctl
 
-# ---- lista de acciones web que pueden bloquearse en modo local ----
-BLOCKABLE_WEB = {"abrir_pagina","cambiar_pagina","cerrar_navegador","maximizar_app","hacer_clic"}
+# Para cerrar navegador si quedó abierto
+from modules.funciones.navegador import navegador as mod_nav
 
-def topological_order(steps: List[Dict[str, Any]], edges: List[Dict[str, str]]) -> List[Dict[str, Any]]:
-    if not edges: return steps
-    id_to_step = {s['id']: s for s in steps}
-    indeg = {s['id']: 0 for s in steps}
-    adj = {s['id']: [] for s in steps}
-    for e in edges:
-        f, t = e.get('from'), e.get('to')
-        if f in id_to_step and t in id_to_step:
-            adj[f].append(t); indeg[t] += 1
-    from collections import deque
-    q = deque([sid for sid, d in indeg.items() if d == 0])
-    out_ids = []
-    while q:
-        u = q.popleft(); out_ids.append(u)
-        for v in adj[u]:
-            indeg[v] -= 1
-            if indeg[v] == 0: q.append(v)
-    if len(out_ids) != len(steps):  # ciclo → orden original
-        return steps
-    return [id_to_step[i] for i in out_ids]
 
-def _notify(notifier, step_id: str, typ: str, msg: str, preview: str = "", status: str | None = None):
-    if notifier:
+# ==============================
+# Contexto de ejecución
+# ==============================
+class ContextoEjecucion:
+    def __init__(self):
+        self.variables: Dict[str, Any] = {}
+        # contadores para prefijos
+        self.contadores = {
+            "csv": 0,
+            "excel": 0,
+            "txt": 0,
+            "carpeta": 0,
+            "lista": 0,
+        }
+        self.driver = None  # para Selenium, si lo usas
+
+    def asignar_variable(self, tipo: str, valor: Any, nombre_personalizado: Optional[str] = None) -> str:
+        if nombre_personalizado:
+            nombre = nombre_personalizado
+        else:
+            self.contadores[tipo] = self.contadores.get(tipo, 0) + 1
+            nombre = f"{tipo}_{self.contadores[tipo]}"
+        self.variables[nombre] = valor
+        return nombre
+
+    def obtener_variable(self, nombre: str):
+        return self.variables.get(nombre)
+
+    def listar_variables(self):
+        return list(self.variables.keys())
+
+    def cerrar(self):
+        # Cierra recursos (navegador, etc.)
         try:
-            payload = {"stepId": step_id, "type": typ, "message": msg}
-            if preview is not None: payload["preview"] = preview
-            if status: payload["status"] = status
-            else:
-                payload["status"] = "OK" if typ == "ok" else "ERROR" if typ == "err" else "WARNING" if typ == "warn" else "LOG"
-            notifier(payload)
+            if self.driver:
+                mod_nav.cerrar_navegador_selenium(self.driver)
         except Exception:
             pass
+        self.driver = None
 
-def run_flow(flow: Dict[str, Any], notifier=None) -> Dict[str, Any]:
-    steps = list(flow.get("steps") or [])
-    edges = list(flow.get("edges") or [])
-    order = topological_order(steps, edges)
-    ctx: Dict[str, Any] = {}
-    driver = None
+
+# ==============================
+# Utilidades de orden (edges)
+# ==============================
+def topological_order(steps: List[Dict[str, Any]], edges: List[Dict[str, str]]) -> List[Dict[str, Any]]:
+    """Devuelve steps en orden topológico según edges. Si hay ciclo o edges vacíos, retorna steps como vinieron."""
+    if not edges:
+        return steps
+    id_to_step = {s['id']: s for s in steps}
+    indeg: Dict[str, int] = {s['id']: 0 for s in steps}
+    adj: Dict[str, List[str]] = {s['id']: [] for s in steps}
+    for e in edges:
+        if e['from'] in id_to_step and e['to'] in id_to_step:
+            adj[e['from']].append(e['to'])
+            indeg[e['to']] += 1
+
+    from collections import deque
+    q = deque([sid for sid, d in indeg.items() if d == 0])
+    ordered_ids: List[str] = []
+    while q:
+        u = q.popleft()
+        ordered_ids.append(u)
+        for v in adj[u]:
+            indeg[v] -= 1
+            if indeg[v] == 0:
+                q.append(v)
+
+    if len(ordered_ids) != len(steps):
+        return steps
+    return [id_to_step[i] for i in ordered_ids]
+
+
+# ==============================
+# Dispatcher (typeId → callable)
+# ==============================
+def build_dispatcher() -> Dict[str, Callable[[ContextoEjecucion, Dict[str, Any]], Any]]:
+    def not_impl(_ctx: ContextoEjecucion, _p: Dict[str, Any]):
+        return {"_": "not_implemented"}
+
+    return {
+        # ---- FS ----
+        "carpeta_listar": lambda ctx, p: act_fs.carpeta_listar(
+            ctx,
+            p.get("ruta", ""),
+            p.get("patron", "*"),
+            p.get("nombre_personalizado"),
+        ),
+        "carpeta_crear": lambda ctx, p: act_fs.carpeta_crear(ctx, p.get("ruta", "")),
+        "archivo_mover": lambda ctx, p: act_fs.archivo_mover(
+            ctx, p.get("origen", ""), p.get("destino", ""), p.get("si_existe", "sobrescribir")
+        ),
+        "archivo_copiar": lambda ctx, p: act_fs.archivo_copiar(
+            ctx, p.get("origen", ""), p.get("destino", ""), p.get("si_existe", "sobrescribir")
+        ),
+        "archivo_borrar": lambda ctx, p: act_fs.archivo_borrar(ctx, p.get("ruta", "")),
+
+        # ---- Lectura (según tus firmas en io_read) ----
+        "leer_csv":   lambda ctx, p: act_read.leer_csv(ctx, p.get("ruta", ""), p.get("nombre_personalizado")),
+        "leer_excel": lambda ctx, p: act_read.leer_excel(ctx, p.get("ruta", ""), p.get("hoja", ""), p.get("nombre_personalizado")),
+        "leer_txt":   lambda ctx, p: act_read.leer_txt_delimitado(ctx, p.get("ruta", ""), p.get("delimitador", ","), p.get("nombre_personalizado")),
+
+        # ---- Escritura ----
+        "escribir_csv":   lambda ctx, p: act_write.escribir_csv(ctx, p.get("variable", ""), p.get("ruta", "")),
+        "escribir_txt":   lambda ctx, p: act_write.escribir_txt(ctx, p.get("variable", ""), p.get("ruta", ""), p.get("delimitador", ",")),
+        "escribir_excel": lambda ctx, p: act_write.escribir_excel(ctx, p.get("variable", ""), p.get("ruta", ""), p.get("hoja", "Hoja1")),
+
+        # ---- Control ----
+        "pausa": lambda _ctx, p: act_ctl.pausa(float(p.get("segundos", 0) or 0)),
+
+        # ---- Web/Selenium si lo usas ----
+        "abrir_pagina":     lambda ctx, p: _open_and_store_driver(ctx, p.get("url", "")),
+        "cambiar_pagina":   lambda ctx, p: act_web.cambiar_pagina_web_selenium(_require_driver(ctx), p.get("url", "")),
+        "cerrar_navegador": lambda ctx, _p: _close_and_clear_driver(ctx),
+        "maximizar_app":    lambda ctx, _p: act_web.maximizar_navegador(_require_driver(ctx)),
+    }
+
+
+def _open_and_store_driver(ctx: ContextoEjecucion, url: str):
+    if ctx.driver:
+        try:
+            act_web.cambiar_pagina_web_selenium(ctx.driver, url)
+            return ctx.driver
+        except Exception:
+            pass
+    ctx.driver = act_web.abrir_pagina_web_selenium(url)
+    return ctx.driver
+
+
+def _require_driver(ctx: ContextoEjecucion):
+    if not ctx.driver:
+        raise RuntimeError("No hay navegador abierto. Agregá un paso 'Abrir página web' antes.")
+    return ctx.driver
+
+
+def _close_and_clear_driver(ctx: ContextoEjecucion):
+    if ctx.driver:
+        try:
+            act_web.cerrar_navegador_selenium(ctx.driver)
+        except Exception:
+            pass
+    ctx.driver = None
+
+
+# ==============================
+# Motor principal de ejecución
+# ==============================
+def run_flow(flow: Dict[str, Any], notifier: Optional[Callable[[Dict[str, Any]], None]] = None) -> Dict[str, Any]:
+    """
+    Ejecuta un flujo {steps:[...], edges:[...]}.
+    'notifier' recibe dicts: {'stepId','message','level','preview?'}
+    """
+    ctx = ContextoEjecucion()
+    dispatch = build_dispatcher()
+
+    steps = flow.get("steps", []) or []
+    edges = flow.get("edges", []) or []
+
+    ordered_steps = topological_order(steps, edges)
+    results: List[Dict[str, Any]] = []
 
     try:
-        for step in order:
+        for step in ordered_steps:
             sid = step.get("id")
             tid = step.get("typeId")
-            props = step.get("props") or {}
+            nombre = step.get("nombre", tid)
+            props = step.get("props", {}) or {}
 
-            # bloqueo local
-            if str(props.get("bloqueado","no")).lower() in ("si","sí","true","1") and tid in BLOCKABLE_WEB:
-                _notify(notifier, sid, "warn", f"{tid} bloqueado (modo local).", "")
-                continue
+            _emit(notifier, {"stepId": sid, "message": f"Ejecutando {nombre}...", "level": "info"})
 
-            _notify(notifier, sid, "log", f"Ejecutando {tid}...")
+            fn = dispatch.get(tid)
+            if not fn:
+                raise NotImplementedError(f"Tipo de acción no soportado: {tid}")
 
-            # --- dispatch por typeId ---
-            if tid == "pausa":
-                res = act_ctrl.pausa(props.get("segundos"), props.get("ms"), ctx)
+            out = fn(ctx, props)
 
-            elif tid == "variable_set":
-                res = act_ctrl.variable_set(props["nombre"], props.get("valor"), ctx)
+            # Resultado resumido para retorno
+            prev = _safe_preview(out)
+            results.append({"id": sid, "typeId": tid, "nombre": nombre, "output": prev})
 
-            elif tid == "variable_get":
-                res = act_ctrl.variable_get(props["nombre"], ctx)
+            # Notificar también preview al front (panel derecho)
+            _emit(notifier, {"stepId": sid, "message": f"Completado {nombre}", "level": "success", "preview": prev})
 
-            elif tid == "dialogo_seleccionar_archivo":
-                res = act_dlg.seleccionar_archivo(props.get("titulo"), props.get("guardar_en","archivo_seleccionado"), ctx)
+        # Limpieza final
+        ctx.cerrar()
 
-            elif tid == "dialogo_seleccionar_carpeta":
-                res = act_dlg.seleccionar_carpeta(props.get("titulo"), props.get("guardar_en","carpeta_seleccionada"), ctx)
+        return {"ok": True, "results": results, "variables": ctx.listar_variables()}
 
-            # ---- Lectura
-            elif tid == "leer_csv":
-                res = act_read.leer_csv(props["ruta"], ctx, props.get("nombre_personalizado"))
+    except Exception as ex:
+        err = "".join(traceback.format_exc())
+        try:
+            ctx.cerrar()
+        except Exception:
+            pass
+        return {"ok": False, "error": str(ex), "traceback": err, "partial_results": results}
 
-            elif tid == "leer_excel":
-                res = act_read.leer_excel(props["ruta"], props["hoja"], ctx, props.get("nombre_personalizado"))
 
-            elif tid == "leer_txt":
-                # acepta 'delimitador'
-                res = act_read.leer_txt(props["ruta"], props["delimitador"], ctx, props.get("nombre_personalizado"))
+def _safe_preview(out):
+    if out is None:
+        return None
+    try:
+        import json
+        s = json.dumps(out, ensure_ascii=False)
+    except Exception:
+        s = str(out)
+    return s[:500] if s else None
 
-            elif tid == "excel_leer_rango":
-                res = act_read.excel_leer_rango(
-                    props["ruta"], props["hoja"], ctx,
-                    props.get("rango"), props.get("columnas"), props.get("nombre_personalizado")
-                )
 
-            # ---- Escritura
-            elif tid in ("escribir_excel", "excel_escribir"):
-                res = act_write.escribir_excel(
-                    props["variable"], props["ruta"], ctx,
-                    hoja=props.get("hoja","Sheet1"), modo=props.get("modo","sobrescribir"),
-                    inicio_celda=props.get("inicio_celda"), incluir_cabeceras=props.get("incluir_cabeceras","sí")
-                )
-
-            elif tid == "escribir_csv":
-                res = act_write.escribir_csv(props["variable"], props["ruta"], ctx)
-
-            elif tid == "excel_crear_hoja":
-                res = act_write.excel_crear_hoja(props["ruta"], props["nombre_hoja"], props.get("si_existe","reemplazar"))
-
-            # ---- Archivos/Carpetas
-            elif tid == "archivo_mover":
-                res = act_fs.archivo_mover(props["origen"], props["destino"], props.get("si_existe","sobrescribir"))
-
-            elif tid == "archivo_copiar":
-                res = act_fs.archivo_copiar(props["origen"], props["destino"], props.get("si_existe","sobrescribir"))
-
-            elif tid == "archivo_borrar":
-                res = act_fs.archivo_borrar(props["ruta"])
-
-            elif tid == "carpeta_crear":
-                res = act_fs.carpeta_crear(props["ruta"])
-
-            elif tid == "carpeta_listar":
-                res = act_fs.carpeta_listar(props["ruta"], props.get("patron","*"), ctx, props.get("nombre_personalizado"))
-
-            # ---- Web/Selenium (opcional)
-            elif tid == "abrir_pagina":
-                if not act_web: raise RuntimeError("Navegador no disponible.")
-                res = act_web.abrir_pagina(props["url"])
-                driver = res.get("driver", driver)
-
-            elif tid == "cambiar_pagina":
-                if not driver: raise RuntimeError("No hay driver")
-                res = act_web.cambiar_pagina(driver, props["url"])
-
-            elif tid == "cerrar_navegador":
-                if not driver:
-                    res = {"status": "WARNING", "message": "No hay navegador para cerrar", "preview": ""}
-                else:
-                    res = act_web.cerrar_navegador(driver)
-                    driver = None
-
-            elif tid == "maximizar_app":
-                if not driver: raise RuntimeError("No hay driver")
-                res = act_web.maximizar(driver)
-
-            else:
-                res = {"status":"ALERT","message":f"Función no implementada: {tid}","preview":""}
-
-            _notify(notifier, sid, "ok" if res.get("status","OK")=="OK" else "warn", res.get("message","OK"), res.get("preview",""), res.get("status"))
-
-        # fin for
-        # cierre suave
-        if driver and act_web:
-            try:
-                act_web.cerrar_navegador(driver)
-            except Exception:
-                pass
-        return {"ok": True, "variables": list(ctx.keys())}
-
-    except Exception as e:
-        if driver and act_web:
-            try: act_web.cerrar_navegador(driver)
-            except Exception: pass
-        return {"ok": False, "error": str(e), "traceback": traceback.format_exc(limit=12)}
+def _emit(cb: Optional[Callable[[Dict[str, Any]], None]], payload: Dict[str, Any]) -> None:
+    if cb:
+        try:
+            cb(payload)
+        except Exception:
+            pass

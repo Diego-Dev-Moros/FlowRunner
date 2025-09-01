@@ -416,11 +416,24 @@ function stopFlow() {
 }
 
 function onProgress(payload) {
-  // payload típico: { stepId, message, level }
-  const msg = (payload && payload.message) ? payload.message : payload;
-  if (typeof msg === 'string') uiConsole?.log(msg);
-  else uiConsole?.log(JSON.stringify(msg, null, 2));  // <- evita [object Object]
+  const { stepId, message, level, preview } = payload || {};
+  if (message) uiConsole?.log(message);
+
+  if (stepId && (preview !== undefined)) {
+    state.results = state.results || {};
+    state.results[stepId] = {
+      status: level || 'info',
+      message: message || '',
+      preview: typeof preview === 'string' ? preview : JSON.stringify(preview, null, 2)
+    };
+    if (state.selectedId === stepId) {
+      const step = state.steps.find(s => s.id === stepId);
+      const def  = step ? registry.getDefById(step.typeId) : null;
+      renderPropsPanel(step || null, def || null, { onChange: onPropChange });
+    }
+  }
 }
+
 
 /* =========================
    Serialización

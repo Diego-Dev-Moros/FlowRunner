@@ -1,86 +1,125 @@
 # modules/funciones/acciones/fs.py
 from __future__ import annotations
-from typing import Any, Dict, Optional
+from typing import Optional, List
+import os
+import glob
+import shutil
 
-try:
-    from modules.funciones.archivos import gestor as mod_gestor
-except Exception:
-    mod_gestor = None
 
-def archivo_mover(origen: str, destino: str, si_existe: str = "sobrescribir"):
-    if mod_gestor and hasattr(mod_gestor, "archivo_mover"):
-        out = mod_gestor.archivo_mover(origen, destino, si_existe)
+def carpeta_listar(ctx, ruta: str, patron: str = "*", nombre_personalizado: Optional[str] = None):
+    """
+    Lista archivos/carpetas según patrón y guarda el resultado en el contexto.
+    - Guarda con prefijo 'carpeta_' (p.ej. 'carpeta_1')
+    - Devuelve dict con preview para UI.
+    """
+    ruta = os.path.expanduser(ruta or ".")
+    patron = patron or "*"
+
+    # Asegura ruta válida (si no existe, lista vacía)
+    if not os.path.exists(ruta):
+        paths: List[str] = []
     else:
-        import os, shutil
-        d = os.path.dirname(destino)
-        if d and not os.path.exists(d): os.makedirs(d, exist_ok=True)
-        if os.path.exists(destino):
-            if si_existe == "sobrescribir":
-                if os.path.isdir(destino): shutil.rmtree(destino)
-                else: os.remove(destino)
-            elif si_existe == "omitir":
-                raise FileExistsError(destino)
-            elif si_existe == "renombrar":
-                base, ext = os.path.splitext(destino); i = 2
-                while os.path.exists(f"{base}_{i}{ext}"): i += 1
-                destino = f"{base}_{i}{ext}"
-        shutil.move(origen, destino)
-        out = destino
-    return {"status": "OK", "message": "Archivo movido", "preview": out}
+        paths = sorted(glob.glob(os.path.join(ruta, patron)))
 
-def archivo_copiar(origen: str, destino: str, si_existe: str = "sobrescribir"):
-    if mod_gestor and hasattr(mod_gestor, "archivo_copiar"):
-        out = mod_gestor.archivo_copiar(origen, destino, si_existe)
-    else:
-        import os, shutil
-        d = os.path.dirname(destino)
-        if d and not os.path.exists(d): os.makedirs(d, exist_ok=True)
-        if os.path.exists(destino):
-            if si_existe == "sobrescribir":
-                if os.path.isdir(destino): shutil.rmtree(destino)
-                else: os.remove(destino)
-            elif si_existe == "omitir":
-                raise FileExistsError(destino)
-            elif si_existe == "renombrar":
-                base, ext = os.path.splitext(destino); i = 2
-                while os.path.exists(f"{base}_{i}{ext}"): i += 1
-                destino = f"{base}_{i}{ext}"
-        shutil.copy2(origen, destino)
-        out = destino
-    return {"status": "OK", "message": "Archivo copiado", "preview": out}
+    nombre_var = ctx.asignar_variable("carpeta", paths, nombre_personalizado)
+    # Por compatibilidad con lógicas existentes
+    ctx.variables["last_list"] = nombre_var
 
-def archivo_borrar(ruta: str):
-    if mod_gestor and hasattr(mod_gestor, "archivo_borrar"):
-        mod_gestor.archivo_borrar(ruta)
-    else:
-        import os, shutil
-        if os.path.isdir(ruta): shutil.rmtree(ruta, ignore_errors=True)
-        elif os.path.exists(ruta): os.remove(ruta)
-    return {"status": "OK", "message": "Archivo/Carpeta borrado", "preview": ""}
+    # Preview para la UI (primeros 10 elementos)
+    sample = paths[:10]
+    return {
+        "variable": nombre_var,
+        "count": len(paths),
+        "sample": sample,
+    }
 
-def carpeta_crear(ruta: str):
-    if mod_gestor and hasattr(mod_gestor, "carpeta_crear"):
-        out = mod_gestor.carpeta_crear(ruta, True)
-    else:
-        import os
-        os.makedirs(ruta, exist_ok=True)
-        out = ruta
-    return {"status": "OK", "message": "Carpeta creada", "preview": out}
 
-def carpeta_listar(ruta: str, patron: str = "*", contexto: Dict[str, Any] | None = None,
-                   nombre_personalizado: Optional[str] = None):
-    if mod_gestor and hasattr(mod_gestor, "carpeta_listar"):
-        lst = mod_gestor.carpeta_listar(ruta, patron)
-    else:
-        import os, glob
-        lst = sorted(glob.glob(os.path.join(ruta, patron)))
-    var = nombre_personalizado or "lista_1"
-    if contexto is not None:
-        # contador simple
-        cnts = contexto.setdefault("_contadores", {})
-        if nombre_personalizado is None:
-            cnts["lista"] = int(cnts.get("lista", 0)) + 1
-            var = f"lista_{cnts['lista']}"
-        contexto[var] = lst
-        contexto["last_list"] = lst
-    return {"status": "OK", "message": f"{len(lst)} ítems → {var}", "preview": "\n".join(lst[:50])}
+def carpeta_crear(_ctx, ruta: str):
+    """Crea carpeta si no existe (idempotente)."""
+    ruta = os.path.expanduser(ruta or ".")
+    os.makedirs(ruta, exist_ok=True)
+    return {"created": True, "path": ruta}
+
+
+def archivo_mover(_ctx, origen: str, destino: str, si_existe: str = "sobrescribir"):
+    """
+    Mueve archivo.
+    si_existe: sobrescribir | renombrar | omitir
+    """
+    origen = os.path.expanduser(origen or "")
+    destino = os.path.expanduser(destino or "")
+    if not origen or not os.path.exists(origen):
+        raise FileNotFoundError(f"Origen no existe: {origen}")
+    if not destino:
+        raise ValueError("Destino vacío.")
+
+    # Crear carpeta destino
+    ddir = destino if os.path.isdir(destino) else os.path.dirname(destino)
+    if ddir:
+        os.makedirs(ddir, exist_ok=True)
+
+    dst = _resolver_conflicto(destino, si_existe)
+    if dst is None:
+        return {"moved": False, "reason": "omitido", "dest": destino}
+
+    shutil.move(origen, dst)
+    return {"moved": True, "from": origen, "to": dst}
+
+
+def archivo_copiar(_ctx, origen: str, destino: str, si_existe: str = "sobrescribir"):
+    origen = os.path.expanduser(origen or "")
+    destino = os.path.expanduser(destino or "")
+    if not origen or not os.path.exists(origen):
+        raise FileNotFoundError(f"Origen no existe: {origen}")
+    if not destino:
+        raise ValueError("Destino vacío.")
+
+    ddir = destino if os.path.isdir(destino) else os.path.dirname(destino)
+    if ddir:
+        os.makedirs(ddir, exist_ok=True)
+
+    dst = _resolver_conflicto(destino, si_existe)
+    if dst is None:
+        return {"copied": False, "reason": "omitido", "dest": destino}
+
+    shutil.copy2(origen, dst)
+    return {"copied": True, "from": origen, "to": dst}
+
+
+def archivo_borrar(_ctx, ruta: str):
+    ruta = os.path.expanduser(ruta or "")
+    if not ruta:
+        raise ValueError("Ruta vacía.")
+    if os.path.isdir(ruta):
+        shutil.rmtree(ruta, ignore_errors=True)
+        return {"deleted_dir": True, "path": ruta}
+    if os.path.exists(ruta):
+        os.remove(ruta)
+        return {"deleted": True, "path": ruta}
+    return {"deleted": False, "reason": "no_exists", "path": ruta}
+
+
+def _resolver_conflicto(destino: str, modo: str):
+    """
+    - sobrescribir: usa destino tal cual (y si existe, lo reemplaza)
+    - renombrar: genera destino (1), (2), ... si ya existe
+    - omitir: si ya existe, retorna None
+    """
+    if modo not in {"sobrescribir", "renombrar", "omitir"}:
+        modo = "sobrescribir"
+
+    if not os.path.exists(destino):
+        return destino
+
+    if modo == "sobrescribir":
+        return destino
+    if modo == "omitir":
+        return None
+    # renombrar
+    base, ext = os.path.splitext(destino)
+    i = 1
+    while True:
+        cand = f"{base} ({i}){ext}"
+        if not os.path.exists(cand):
+            return cand
+        i += 1
