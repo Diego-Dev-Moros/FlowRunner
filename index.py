@@ -1,6 +1,10 @@
 # index.py
-import os, json, eel
-from modules.funciones.extras import run_flow as engine_run_flow  # 👈 renombrado
+import os
+import json
+import shutil
+import eel
+from eel import browsers
+from modules.funciones.extras import run_flow as engine_run_flow  # motor de ejecución
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 eel.init(BASE_DIR, allowed_extensions=['.js', '.html', '.css'])
@@ -14,7 +18,7 @@ def _notify(payload):
 @eel.expose
 def run_flow(flow):
     print('RUN_FLOW <-', json.dumps(flow, indent=2, ensure_ascii=False))
-    result = engine_run_flow(flow, notifier=_notify)  # 👈 usamos el motor renombrado
+    result = engine_run_flow(flow, notifier=_notify)
     print('RUN_FLOW ->', json.dumps(result, indent=2, ensure_ascii=False))
     return result
 
@@ -36,5 +40,62 @@ def pause_run():
     print('PAUSE_RUN (pendiente)')
     return True
 
+
+# -------------------------
+# Navegador: CHROME (app) -> EDGE (app) -> normal -> sin navegador
+# -------------------------
+def _which_browser():
+    pf   = os.environ.get('ProgramFiles', r"C:\Program Files")
+    pf86 = os.environ.get('ProgramFiles(x86)', r"C:\Program Files (x86)")
+    lad  = os.environ.get('LOCALAPPDATA', os.path.expanduser(r"~\AppData\Local"))
+
+    chrome = next((p for p in [
+        os.path.join(pf,   r"Google\Chrome\Application\chrome.exe"),
+        os.path.join(pf86, r"Google\Chrome\Application\chrome.exe"),
+        os.path.join(lad,  r"Google\Chrome\Application\chrome.exe"),
+        shutil.which("chrome"),
+        shutil.which("chrome.exe"),
+    ] if p and os.path.exists(p)), None)
+
+    edge = next((p for p in [
+        os.path.join(pf,   r"Microsoft\Edge\Application\msedge.exe"),
+        os.path.join(pf86, r"Microsoft\Edge\Application\msedge.exe"),
+        shutil.which("msedge"),
+        shutil.which("msedge.exe"),
+    ] if p and os.path.exists(p)), None)
+
+    return {"chrome": chrome, "edge": edge}
+
+def _register_paths(paths):
+    if paths.get("chrome"):
+        browsers.set_path('chrome', paths["chrome"])
+        browsers.set_path('chrome-app', paths["chrome"])  # modo app
+    if paths.get("edge"):
+        browsers.set_path('edge', paths["edge"])
+        browsers.set_path('edge-app', paths["edge"])      # modo app
+
 if __name__ == '__main__':
-    eel.start('vistas/servicio.html', size=(1280, 800), host='localhost', port=8000, block=True)
+    page = 'vistas/servicio.html'
+    host = 'localhost'
+    port = 8000
+    size = (1280, 800)
+
+    paths = _which_browser()
+    _register_paths(paths)
+
+    modes = []
+    if paths.get("chrome"): modes += ['chrome-app', 'chrome']
+    if paths.get("edge"):   modes += ['edge-app',   'edge']
+    modes.append(None)  # servir sin abrir navegador
+
+    for mode in modes:
+        try:
+            if mode is None:
+                print(f"[INFO] Sin navegador. Abrí manualmente: http://{host}:{port}/{page}")
+            else:
+                print(f"[INFO] Intentando abrir en modo: {mode}")
+            eel.start(page, mode=mode, size=size, host=host, port=port, block=True)
+            break
+        except OSError as e:
+            print(f"[WARN] Falló {mode}: {e}")
+            continue

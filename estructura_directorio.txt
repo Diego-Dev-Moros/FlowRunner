@@ -1,0 +1,47 @@
+├─ .gitignore
+├─ Comments.md
+├─ LICENSE
+├─ NOTICE
+├─ README.md
+├─ index.py
+├─ modules
+│   ├─ config.py
+│   ├─ funciones
+│   │   ├─ __pycache__
+│   │   │   └─ extras.cpython-311.pyc
+│   │   ├─ archivos
+│   │   │   ├─ __pycache__
+│   │   │   │   ├─ escritura.cpython-311.pyc
+│   │   │   │   └─ lectura.cpython-311.pyc
+│   │   │   ├─ escritura.py
+│   │   │   └─ lectura.py
+│   │   ├─ extras.py
+│   │   ├─ navegador
+│   │   │   ├─ __pycache__
+│   │   │   │   └─ navegador.cpython-311.pyc
+│   │   │   └─ navegador.py
+│   │   └─ other.py
+│   └─ helpers.py
+├─ requirements.txt
+└─ vistas
+    ├─ services
+    │   ├─ canvas.js
+    │   ├─ catalog.js
+    │   ├─ config.js
+    │   ├─ edges.js
+    │   ├─ io
+    │   │   └─ json.js
+    │   ├─ main.js
+    │   ├─ nodes.js
+    │   ├─ registry.js
+    │   ├─ runtime
+    │   │   ├─ handlers.js
+    │   │   └─ runner.js
+    │   ├─ state.js
+    │   └─ ui
+    │       ├─ console.js
+    │       ├─ properties.js
+    │       └─ toolbar.js
+    ├─ servicio.html
+    └─ styles
+        └─ estilos.css

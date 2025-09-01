@@ -1,80 +1,35 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Orquestador Low-code - Servicio</title>
-  <!-- Si tu CSS está dentro de vistas/styles/, deja esta ruta.
-       Si lo tienes en la raíz ../styles/, cambia a ../styles/estilos.css -->
+  <meta charset="utf-8" />
+  <title>FlowRunner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="./styles/estilos.css" />
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <span class="brand-dot"></span>
-      <h1>FlowRunner</h1>
-      <span class="sub">Tu compañero para flujos automatizados.</span>
-    </div>
+  <!-- Topbar -->
+  <div id="topbar" class="topbar"></div>
 
-    <div class="actions">
-      <button id="btnExport" class="btn btn-primary" title="Exportar flujo">Exportar</button>
-      <button id="btnRun" class="btn btn-success" title="Ejecutar flujo">Ejecutar</button>
-      <button id="btnCancel" class="btn btn-warning" title="Cancelar ejecución">Cancelar</button>
-      <button id="btnPause" class="btn btn-secondary" title="Pausar (pendiente)" disabled>Pausar</button>
-      <button id="btnClear" class="btn btn-danger" title="Borrar lienzo (reiniciar)">Borrar</button>
-    </div>
-  </header>
+  <!-- Layout principal -->
+  <div class="layout">
+    <!-- Sidebar izquierda (catálogo) -->
+    <aside id="sidebar"></aside>
 
-  <main class="layout">
-    <!-- IZQUIERDA: Lista de funciones (arrastrables) -->
-    <aside class="sidebar">
-      <div class="sidebar-header">
-        <h2>Funciones</h2>
-        <input id="searchFuncs" type="search" placeholder="Buscar..." />
+    <!-- Centro: lienzo + consola -->
+    <section id="main">
+      <div id="workspace">
+        <svg id="svgEdges"></svg>
+        <div id="lienzo"></div>
+        <div class="canvas-hint">Arrastra funciones desde la izquierda</div>
       </div>
-
-      <section class="func-group">
-        <h3>Acciones de Inicio</h3>
-        <div id="listInicio" class="func-list"></div>
-      </section>
-
-      <section class="func-group">
-        <h3>Acciones de Proceso</h3>
-        <div id="listProceso" class="func-list"></div>
-      </section>
-
-      <section class="func-group">
-        <h3>Acciones de Cierre</h3>
-        <div id="listCierre" class="func-list"></div>
-      </section>
-
-      <section class="func-group">
-        <h3>Funciones Básicas</h3>
-        <div id="listBasicas" class="func-list"></div>
-      </section>
-    </aside>
-
-    <!-- CENTRO: Lienzo -->
-    <section id="canvas" class="canvas" tabindex="0">
-      <div class="canvas-hint">
-        Arrastra funciones aquí para construir tu flujo.
-      </div>
-      <!-- Los nodos se crearán dinámicamente -->
+      <div id="console"></div>
     </section>
 
-    <!-- DERECHA: Propiedades -->
-    <aside class="props">
-      <div class="props-header">
-        <h2>Propiedades</h2>
-        <div id="selectionInfo" class="muted">Ningún nodo seleccionado</div>
-      </div>
-      <form id="propsForm" class="props-form">
-        <!-- Campos dinámicos -->
-      </form>
-    </aside>
-  </main>
-  <!-- Tu lógica principal. Debe existir en vistas/servicio.js -->
+    <!-- Panel de propiedades (derecha) -->
+    <aside id="props"></aside>
+  </div>
+
   <script src="/eel.js"></script>
-  <script src="./servicio.js"></script>
+  <script type="module" src="./services/main.js"></script>
 </body>
 </html>

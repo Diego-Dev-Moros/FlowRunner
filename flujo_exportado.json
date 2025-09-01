@@ -1,0 +1,125 @@
+{
+  "steps": [
+    {
+      "id": "step_1",
+      "defId": "abrir_pagina",
+      "label": "Abrir página web",
+      "categoria": "inicio",
+      "pos": {
+        "x": 103.19998168945312,
+        "y": 122.39999771118164
+      },
+      "props": {
+        "url": "asdad"
+      },
+      "ports": {
+        "in": [
+          "W",
+          "N"
+        ],
+        "out": [
+          "E",
+          "S"
+        ]
+      }
+    },
+    {
+      "id": "step_2",
+      "defId": "cambiar_pagina",
+      "label": "Cambiar página web",
+      "categoria": "inicio",
+      "pos": {
+        "x": 387.1999816894531,
+        "y": 49.39999771118164
+      },
+      "props": {},
+      "ports": {
+        "in": [
+          "W",
+          "N"
+        ],
+        "out": [
+          "E",
+          "S"
+        ]
+      }
+    },
+    {
+      "id": "step_3",
+      "defId": "maximizar_app",
+      "label": "Maximizar aplicación",
+      "categoria": "proceso",
+      "pos": {
+        "x": 620.1750183105469,
+        "y": 181.39999771118164
+      },
+      "props": {},
+      "ports": {
+        "in": [
+          "W",
+          "N"
+        ],
+        "out": [
+          "E",
+          "S"
+        ]
+      }
+    },
+    {
+      "id": "step_4",
+      "defId": "cerrar_navegador",
+      "label": "Cerrar navegador",
+      "categoria": "cierre",
+      "pos": {
+        "x": 566.1874694824219,
+        "y": 446.39999771118164
+      },
+      "props": {},
+      "ports": {
+        "in": [
+          "W",
+          "N"
+        ],
+        "out": [
+          "E",
+          "S"
+        ]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge_1756687255105_00yty",
+      "from": {
+        "step": "step_1",
+        "port": "E"
+      },
+      "to": {
+        "step": "step_2",
+        "port": "W"
+      }
+    },
+    {
+      "id": "edge_1756687279802_916tq",
+      "from": {
+        "step": "step_2",
+        "port": "E"
+      },
+      "to": {
+        "step": "step_3",
+        "port": "W"
+      }
+    },
+    {
+      "id": "edge_1756687283311_k81oy",
+      "from": {
+        "step": "step_3",
+        "port": "E"
+      },
+      "to": {
+        "step": "step_4",
+        "port": "W"
+      }
+    }
+  ]
+}
