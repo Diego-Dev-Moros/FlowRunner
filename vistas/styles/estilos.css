@@ -378,3 +378,15 @@ body{
   align-items: center;
   gap: 6px;
 }
+/* Canvas */
+#workspace{
+  position:relative; flex:1; min-height:0;
+  background:repeating-linear-gradient(45deg,#fafafa,#fafafa 10px,#f5f5f5 10px,#f5f5f5 20px);
+  border:1px solid var(--border); border-radius:.75rem; box-shadow:var(--shadow);
+  overflow:auto;               /* <- antes estaba hidden */
+}
+
+/* Capas que se escalan juntas */
+#lienzo, #svgEdges{
+  transform-origin: 0 0;       /* <- necesario para zoom */
+}

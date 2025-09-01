@@ -1,0 +1,36 @@
+{
+  "version": "1.0.0",
+  "steps": [
+    {
+      "id": "N1_listar",
+      "typeId": "carpeta_listar",
+      "nombre": "Carpeta: Listar",
+      "position": { "x": 320, "y": 180 },
+      "props": {
+        "ruta": "C:\\\\Users\\\\Diego\\\\Desktop",
+        "patron": "*.exe"
+      }
+    },
+    {
+      "id": "N2_pausa",
+      "typeId": "pausa",
+      "nombre": "Pausa 0.3s",
+      "position": { "x": 640, "y": 180 },
+      "props": { "segundos": 0.3 }
+    },
+    {
+      "id": "N3_csv",
+      "typeId": "escribir_csv",
+      "nombre": "Escribir CSV",
+      "position": { "x": 960, "y": 180 },
+      "props": {
+        "variable": "carpeta_1",
+        "ruta": "C:\\\\Users\\\\Diego\\\\Desktop\\\\ProyectoF\\\\FlowRunner\\\\test\\\\archivos_test\\\\listado.csv"
+      }
+    }
+  ],
+  "edges": [
+    { "from": "N1_listar", "to": "N2_pausa" },
+    { "from": "N2_pausa", "to": "N3_csv" }
+  ]
+}
