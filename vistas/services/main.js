@@ -13,6 +13,7 @@ let uiConsole;
 let zoom = 1;                 // 0.5 .. 2
 let isSpacePanning = false;
 let panStart = null;
+const AUTO_CENTER_ON_SELECT = true; // centra al seleccionar
 
 async function init() {
   // Topbar
@@ -50,6 +51,13 @@ async function init() {
   if (window.eel && typeof window.eel.expose === 'function') {
     window.eel.expose(onProgress, 'notify_progress');
   }
+
+  // Atajo: centrar el nodo seleccionado (F)
+  window.addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() === 'f' && state.selectedId) {
+      centerOnStep(state.selectedId, true);
+    }
+  });
 
   updateCanvasHint();
   updateCanvasSize();
@@ -121,12 +129,13 @@ function setupPanZoom() {
     window.removeEventListener('mouseup', onPanUp);
   }
 
-  // aplica zoom a ambas capas
+  // aplica zoom a ambas capas (mismo origen para que cuadre con scroll)
   function setZoom(z) {
     zoom = z;
     lienzo.style.transform = `scale(${zoom})`;
+    lienzo.style.transformOrigin = '0 0';
     svg.style.transform    = `scale(${zoom})`;
-    // edges y nodos se escalan parejos → no hace falta recomputar inmediatamente
+    svg.style.transformOrigin = '0 0';
   }
 
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
@@ -159,6 +168,9 @@ function createNode(def, x = 80, y = 80) {
   updateCanvasSize();
   edges.renderEdges();
   updateCanvasHint();
+
+  // centrar en el nodo recién creado
+  centerOnStep(step.id, true);
 }
 
 function mountNode(step, def) {
@@ -286,6 +298,8 @@ function enableDrag(el, step) {
     window.removeEventListener('mouseup', onMouseUp);
     updateCanvasSize();
     edges.renderEdges();
+
+    if (AUTO_CENTER_ON_SELECT) centerOnStep(step.id, true);
   };
 
   header.addEventListener('mousedown', (e) => {
@@ -308,6 +322,10 @@ function selectStep(stepId) {
   const step = state.steps.find(s => s.id === stepId);
   const def  = step ? registry.getDefById(step.typeId) : null;
   renderPropsPanel(step || null, def || null, { onChange: onPropChange });
+
+  if (AUTO_CENTER_ON_SELECT && stepId) {
+    centerOnStep(stepId, true);
+  }
 }
 
 function onPropChange(step, key, value) {
@@ -338,6 +356,9 @@ function deleteStep(stepId) {
   updateCanvasSize();
   edges.renderEdges();
   updateCanvasHint();
+
+  // centra en el primero si quedó alguno
+  if (state.steps.length) centerOnStep(state.steps[0].id, true);
 }
 
 function addEdge(fromStepId, toStepId) {
@@ -416,6 +437,7 @@ function stopFlow() {
 }
 
 function onProgress(payload) {
+  // payload: { stepId, message, level, preview }
   const { stepId, message, level, preview } = payload || {};
   if (message) uiConsole?.log(message);
 
@@ -433,7 +455,6 @@ function onProgress(payload) {
     }
   }
 }
-
 
 /* =========================
    Serialización
@@ -482,6 +503,9 @@ function loadFlowJSON(data) {
   updateCanvasHint();
   state.selectedId = null;
   renderPropsPanel(null, null);
+
+  // centrar en el primer nodo cargado
+  if (state.steps.length) centerOnStep(state.steps[0].id, true);
 }
 
 /* =========================
@@ -529,6 +553,30 @@ function updateCanvasSize() {
   svg.setAttribute('width',  maxX + marginX);
   svg.setAttribute('height', maxY + marginY);
   svg.setAttribute('viewBox', `0 0 ${maxX + marginX} ${maxY + marginY}`);
+}
+
+// centra la vista en un nodo (ajustando por el zoom actual)
+function centerOnStep(stepId, smooth = true) {
+  const ws = getWorkspace();
+  const el = document.getElementById(stepId);
+  if (!ws || !el) return;
+
+  // coordenadas del contenido (sin zoom)
+  const nodeLeft = el.offsetLeft;
+  const nodeTop  = el.offsetTop;
+  const nodeW    = el.offsetWidth;
+  const nodeH    = el.offsetHeight;
+
+  const viewW = ws.clientWidth / zoom;  // viewport expresado en coords del contenido
+  const viewH = ws.clientHeight / zoom;
+
+  const cx = nodeLeft + nodeW / 2;
+  const cy = nodeTop  + nodeH / 2;
+
+  const left = Math.max(0, cx - viewW / 2);
+  const top  = Math.max(0, cy - viewH / 2);
+
+  ws.scrollTo({ left, top, behavior: smooth ? 'smooth' : 'auto' });
 }
 
 /* Simulador si no hay backend */

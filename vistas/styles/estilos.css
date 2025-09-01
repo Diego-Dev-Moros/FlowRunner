@@ -390,3 +390,83 @@ body{
 #lienzo, #svgEdges{
   transform-origin: 0 0;       /* <- necesario para zoom */
 }
+
+
+/* ───────── Scrollbar oscuro (solo en la consola) ───────── */
+#console .con-body{
+  /* Firefox */
+  scrollbar-width: thin;                        /* thin | auto */
+  scrollbar-color: #343b48 #0d0f12;            /* thumb | track */
+  /* Opcional: mantiene el ancho estable cuando aparece el scroll */
+  scrollbar-gutter: stable;
+}
+
+/* Chrome/Edge/Safari */
+#console .con-body::-webkit-scrollbar{
+  width: 10px;           /* grosor vertical */
+  height: 10px;          /* grosor horizontal (por si acaso) */
+}
+
+#console .con-body::-webkit-scrollbar-track{
+  background: #0d0f12;   /* mismo fondo que la consola */
+  border-radius: 8px;
+}
+
+#console .con-body::-webkit-scrollbar-thumb{
+  background: #343b48;   /* gris oscuro para el “pulgar” */
+  border-radius: 8px;
+  border: 2px solid #0d0f12; /* separa visualmente del track */
+}
+
+#console .con-body::-webkit-scrollbar-thumb:hover{
+  background: #485064;   /* un poco más claro al hover */
+}
+
+#console .con-body::-webkit-scrollbar-corner{
+  background: #0d0f12;   /* esquina cuando hay scroll horizontal + vertical */
+}
+
+/* ───────── Scrollbar oscuro (consola) — ya tenías similar, lo dejamos aquí por claridad ───────── */
+#console .con-body{
+  scrollbar-width: thin;
+  scrollbar-color: #343b48 #0d0f12;
+  scrollbar-gutter: stable;
+}
+#console .con-body::-webkit-scrollbar{ width:10px; height:10px; }
+#console .con-body::-webkit-scrollbar-track{ background:#0d0f12; border-radius:8px; }
+#console .con-body::-webkit-scrollbar-thumb{
+  background:#343b48; border-radius:8px; border:2px solid #0d0f12;
+}
+#console .con-body::-webkit-scrollbar-thumb:hover{ background:#485064; }
+#console .con-body::-webkit-scrollbar-corner{ background:#0d0f12; }
+
+/* ───────── Scrollbar claro y estilizado (workspace, sidebar, props) ───────── */
+#workspace, #sidebar, #props{
+  scrollbar-width: thin;                  /* Firefox */
+  scrollbar-color: #a6acb8 #eceff3;       /* thumb | track */
+}
+#workspace::-webkit-scrollbar,
+#sidebar::-webkit-scrollbar,
+#props::-webkit-scrollbar{
+  width: 12px;
+  height: 12px;
+}
+#workspace::-webkit-scrollbar-track,
+#sidebar::-webkit-scrollbar-track,
+#props::-webkit-scrollbar-track{
+  background: #eceff3;
+  border-radius: 10px;
+}
+#workspace::-webkit-scrollbar-thumb,
+#sidebar::-webkit-scrollbar-thumb,
+#props::-webkit-scrollbar-thumb{
+  background: #a6acb8;
+  border-radius: 10px;
+  border: 2px solid #eceff3;
+}
+#workspace::-webkit-scrollbar-thumb:hover,
+#sidebar::-webkit-scrollbar-thumb:hover,
+#props::-webkit-scrollbar-thumb:hover{
+  background: #8f97a6;
+}
+#workspace::-webkit-scrollbar-corner{ background:#eceff3; }
