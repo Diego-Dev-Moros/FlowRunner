@@ -1,0 +1,54 @@
+# Esquema de carpetas (resumen)
+
+.
+├─ Comments.md
+├─ README.md
+├─ index.py
+├─ requirements.txt
+├─ flujo_exportado.json
+├─ modules
+│  ├─ config.py
+│  ├─ helpers.py
+│  ├─ funciones
+│  │  ├─ acciones
+│  │  │  ├─ control.py              # Pausas y utilidades de control de flujo
+│  │  │  ├─ fs.py                   # Sistema de archivos (listar/mover/copiar/borrar)
+│  │  │  ├─ io_read.py              # Lecturas (p.ej. Excel)
+│  │  │  ├─ io_write.py             # Escrituras (CSV/Excel)
+│  │  │  ├─ web.py                  # Acciones web (si aplica)
+│  │  │  └─ dialogos_wrappers.py    # Diálogos del sistema (opcional)
+│  │  ├─ archivos
+│  │  │  ├─ lectura.py
+│  │  │  ├─ escritura.py
+│  │  │  └─ gestor.py
+│  │  ├─ navegador
+│  │  │  └─ navegador.py
+│  │  ├─ dialogos.py
+│  │  ├─ extras.py
+│  │  └─ other.py
+│  └─ __pycache__/...
+├─ vistas
+│  ├─ servicio.html                  # Shell de la app
+│  ├─ styles
+│  │  └─ estilos.css                 # Tema + scrollbars custom + nodos
+│  └─ services
+│     ├─ main.js                     # Orquestación: canvas, zoom/pan, run, import/export
+│     ├─ state.js                    # Estado global (steps/edges/resultados)
+│     ├─ catalog.js                  # Catálogo de nodos (id, nombre, schema, categoría)
+│     ├─ registry.js                 # Filtra catálogo por ENABLED_TYPES del backend
+│     ├─ edges.js                    # Cálculo/render de conexiones SVG
+│     ├─ nodes.js                    # Helpers para crear/drag de nodos (legacy)
+│     ├─ canvas.js                   # Utilidades de canvas (legacy helpers)
+│     ├─ io
+│     │  └─ json.js                  # Utilidades de import/export de flujos
+│     ├─ runtime
+│     │  ├─ handlers.js
+│     │  └─ runner.js                # Convenciones de ejecución (front)
+│     └─ ui
+│        ├─ topbar.js                # Botones: Limpiar/Importar/Exportar
+│        ├─ toolbar.js               # Catálogo lateral (drag & drop)
+│        ├─ properties.js            # Panel derecho de propiedades
+│        └─ console.js               # Consola de ejecución
+└─ documentation
+   ├─ Information.md
+   └─ esquema.txt
