@@ -235,30 +235,99 @@ body{
   min-height:calc(100vh - 64px);
 }
 
-/* Sidebar */
+/* Sidebar - Catálogo mejorado */
 #sidebar{
   background:var(--panel);
   border:1px solid var(--border); border-radius:.75rem; padding:1rem;
   box-shadow:var(--shadow);
   overflow:auto;
 }
-#sidebar h4{
-  margin:12px 0 6px; font-size:14px; color:#444; display:flex; align-items:center;
-  cursor:pointer; user-select:none;
+
+/* Grupos de funciones */
+.func-group {
+  margin-bottom: 12px;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
 }
-#sidebar h4 .chev{
-  display:inline-block; width:0; height:0; margin-right:6px;
-  border-left:5px solid transparent; border-right:5px solid transparent;
-  border-top:6px solid #666; transform:rotate(90deg); transition:transform .15s ease;
+
+.func-group:last-child {
+  margin-bottom: 0;
 }
-.cat-collapsed h4 .chev{ transform:rotate(0deg); }
-.tool-list{ display:grid; gap:6px; }
-.cat-collapsed .tool-list{ display:none; }
-.tool-item{
-  cursor:grab; padding:8px 10px; border:1px solid var(--border); background:#fff;
-  border-radius:10px; text-align:left; font-size:13px; user-select:none;
+
+/* Headers de categorías mejorados */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #fafafa;
+  border-bottom: 1px solid #e8e8e8;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
 }
-.tool-item:hover{ border-color:#ddd; box-shadow:0 1px 6px rgba(0,0,0,.06); }
+
+.sidebar-header:hover {
+  background: #f5f5f5;
+}
+
+/* Lista de herramientas */
+.tool-list {
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+}
+
+/* Items de herramientas mejorados */
+.tool-item {
+  cursor: grab;
+  padding: 10px;
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 6px;
+  text-align: left;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.tool-item:hover {
+  border-color: var(--pwc-orange);
+  box-shadow: 0 2px 8px rgba(255, 102, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+.tool-item:active {
+  cursor: grabbing;
+  transform: translateY(0);
+}
+
+.tool-item-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tool-name {
+  font-weight: 500;
+  font-size: 13px;
+  color: #333;
+  line-height: 1.3;
+}
+
+.tool-desc {
+  font-size: 11px;
+  color: #666;
+  line-height: 1.3;
+  opacity: 0.9;
+}
+
+/* Estados de drag */
+.tool-item[dragging] {
+  opacity: 0.5;
+  transform: rotate(2deg);
+}
 
 /* Centro */
 #main{ display:flex; flex-direction:column; min-width:0; }

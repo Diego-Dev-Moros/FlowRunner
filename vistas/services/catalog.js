@@ -4,7 +4,7 @@
 
 export const FUNCTION_CATALOG = [
   // =========================
-  // INICIO
+  // 🚀 INICIO & CONFIGURACIÓN
   // =========================
   {
     id: 'abrir_pagina',
@@ -13,15 +13,6 @@ export const FUNCTION_CATALOG = [
     descripcion: 'Abre una URL en el navegador predeterminado.',
     schema: [
       { key: 'url', label: 'URL', type: 'url', required: true, placeholder: 'https://...' }
-    ]
-  },
-  {
-    id: 'cambiar_pagina',
-    nombre: 'Cambiar página web',
-    categoria: 'inicio',
-    descripcion: 'Navega a otra URL en la pestaña activa.',
-    schema: [
-      { key: 'url', label: 'Nueva URL', type: 'url', required: true, placeholder: 'https://...' }
     ]
   },
   {
@@ -43,23 +34,32 @@ export const FUNCTION_CATALOG = [
       { key: 'args',        label: 'Argumentos (opcional)', type: 'text', required: false, placeholder: '--modo=seguro' }
     ]
   },
-
-  // =========================
-  // PROCESO
-  // =========================
   {
     id: 'maximizar_app',
     nombre: 'Maximizar aplicación',
-    categoria: 'proceso',
+    categoria: 'inicio',
     descripcion: 'Maximiza la ventana de la aplicación objetivo.',
     schema: [
       { key: 'titulo', label: 'Título de ventana (opcional)', type: 'text', required: false }
     ]
   },
+
+  // =========================
+  // 🌐 NAVEGACIÓN WEB
+  // =========================
+  {
+    id: 'cambiar_pagina',
+    nombre: 'Cambiar página web',
+    categoria: 'navegacion',
+    descripcion: 'Navega a otra URL en la pestaña activa.',
+    schema: [
+      { key: 'url', label: 'Nueva URL', type: 'url', required: true, placeholder: 'https://...' }
+    ]
+  },
   {
     id: 'hacer_clic',
     nombre: 'Hacer clic',
-    categoria: 'proceso',
+    categoria: 'navegacion',
     descripcion: 'Realiza un clic en un punto o elemento.',
     schema: [
       { key: 'selector', label: 'Selector/Elemento (opcional)', type: 'text', required: false, placeholder: '#btnEnviar / XPath / texto' },
@@ -71,7 +71,7 @@ export const FUNCTION_CATALOG = [
   {
     id: 'escribir_texto',
     nombre: 'Escribir texto / Teclas',
-    categoria: 'proceso',
+    categoria: 'navegacion',
     descripcion: 'Escribe texto o envía combinación de teclas.',
     schema: [
       { key: 'modo', label: 'Modo', type: 'select', required: true, options: ['texto','hotkeys'] },
@@ -81,115 +81,20 @@ export const FUNCTION_CATALOG = [
   {
     id: 'copiar_pegar',
     nombre: 'Copiar y pegar',
-    categoria: 'proceso',
+    categoria: 'navegacion',
     descripcion: 'Copia y pega entre aplicaciones.',
     schema: [
       { key: 'origen', label: 'Origen (selector/ventana)', type: 'text', required: false },
       { key: 'destino', label: 'Destino (selector/ventana)', type: 'text', required: false }
     ]
   },
-  {
-    id: 'ordenar_info',
-    nombre: 'Ordenar información',
-    categoria: 'proceso',
-    descripcion: 'Ordena datos según criterio.',
-    schema: [
-      { key: 'criterio', label: 'Criterio', type: 'select', required: true, options: ['asc','desc','alfabético','numérico'] },
-      { key: 'columna', label: 'Columna/Campo', type: 'text', required: false }
-    ]
-  },
 
   // =========================
-  // CIERRE
-  // =========================
-  {
-    id: 'cerrar_navegador',
-    nombre: 'Cerrar navegador',
-    categoria: 'cierre',
-    descripcion: 'Cierra el navegador o una URL específica.',
-    schema: [
-      { key: 'url', label: 'URL específica (opcional)', type: 'url', required: false }
-    ]
-  },
-  {
-    id: 'cerrar_documento',
-    nombre: 'Cerrar documento',
-    categoria: 'cierre',
-    descripcion: 'Cierra el archivo en uso.',
-    schema: [
-      { key: 'forzar', label: 'Forzar cierre', type: 'select', required: true, options: ['no','sí'] }
-    ]
-  },
-  {
-    id: 'cerrar_app',
-    nombre: 'Cerrar aplicación',
-    categoria: 'cierre',
-    descripcion: 'Cierra la aplicación objetivo.',
-    schema: [
-      { key: 'titulo', label: 'Título de ventana (opcional)', type: 'text', required: false }
-    ]
-  },
-
-  // =========================
-  // BÁSICAS
-  // =========================
-  { id: 'exportar_json', nombre: 'Exportar flujo (JSON/XML)', categoria: 'basicas', descripcion: 'Exporta el flujo actual.', schema: [] },
-  { id: 'ejecutar_flujo', nombre: 'Ejecutar flujo', categoria: 'basicas', descripcion: 'Ejecuta el JSON generado.', schema: [] },
-  { id: 'finalizar_todo', nombre: 'Finalizar (cerrar todo)', categoria: 'basicas', descripcion: 'Finaliza y limpia recursos.', schema: [] },
-  {
-    id: 'pausa',
-    nombre: 'Pausa (esperar)',
-    categoria: 'basicas',
-    descripcion: 'Detiene la ejecución por algunos segundos.',
-    schema: [
-      { key: 'segundos', label: 'Segundos', type: 'number', required: true, placeholder: '1' }
-    ]
-  },
-  {
-    id: 'variable_set',
-    nombre: 'Variable: Set',
-    categoria: 'basicas',
-    descripcion: 'Crea/actualiza una variable del flujo.',
-    schema: [
-      { key: 'variable', label: 'Nombre variable', type: 'text', required: true,  placeholder: 'mi_var' },
-      { key: 'valor',    label: 'Valor (texto)',   type: 'text', required: true,  placeholder: '123 | Hola | true' }
-    ]
-  },
-  {
-    id: 'variable_get',
-    nombre: 'Variable: Get',
-    categoria: 'basicas',
-    descripcion: 'Lee una variable del flujo.',
-    schema: [
-      { key: 'variable', label: 'Nombre variable', type: 'text', required: true, placeholder: 'mi_var' }
-    ]
-  },
-  {
-    id: 'dialogo_seleccionar_archivo',
-    nombre: 'Diálogo: Seleccionar archivo',
-    categoria: 'basicas',
-    descripcion: 'Abre un diálogo para elegir archivo y guarda la ruta.',
-    schema: [
-      { key: 'filtro',  label: 'Filtro (ej. *.xlsx;*.csv)', type: 'text', required: false },
-      { key: 'nombre_personalizado', label: 'Nombre variable (opcional)', type: 'text', required: false }
-    ]
-  },
-  {
-    id: 'dialogo_seleccionar_carpeta',
-    nombre: 'Diálogo: Seleccionar carpeta',
-    categoria: 'basicas',
-    descripcion: 'Abre un diálogo para elegir carpeta y guarda la ruta.',
-    schema: [
-      { key: 'nombre_personalizado', label: 'Nombre variable (opcional)', type: 'text', required: false }
-    ]
-  },
-
-  // =========================
-  // LECTURA
+  // 📖 LEER INFORMACIÓN
   // =========================
   {
     id: 'excel_leer_rango',
-    nombre: 'Excel: Leer rango',
+    nombre: 'Leer datos de Excel',
     categoria: 'lectura',
     descripcion: 'Lee un rango (A1:D100) o columnas específicas.',
     schema: [
@@ -201,7 +106,7 @@ export const FUNCTION_CATALOG = [
   },
   {
     id: 'carpeta_listar',
-    nombre: 'Carpeta: Listar',
+    nombre: 'Ver archivos de carpeta',
     categoria: 'lectura',
     descripcion: 'Lista archivos de una carpeta con patrón opcional.',
     schema: [
@@ -212,11 +117,57 @@ export const FUNCTION_CATALOG = [
   },
 
   // =========================
-  // ESCRITURA
+  // 📊 PROCESAR DATOS
+  // =========================
+  {
+    id: 'ordenar_info',
+    nombre: 'Ordenar información',
+    categoria: 'datos',
+    descripcion: 'Ordena datos según criterio.',
+    schema: [
+      { key: 'criterio', label: 'Criterio', type: 'select', required: true, options: ['asc','desc','alfabético','numérico'] },
+      { key: 'columna', label: 'Columna/Campo', type: 'text', required: false }
+    ]
+  },
+  {
+    id: 'variable_set',
+    nombre: 'Crear/Actualizar variable',
+    categoria: 'datos',
+    descripcion: 'Crea/actualiza una variable del flujo.',
+    schema: [
+      { key: 'variable', label: 'Nombre variable', type: 'text', required: true,  placeholder: 'mi_var' },
+      { key: 'valor',    label: 'Valor (texto)',   type: 'text', required: true,  placeholder: '123 | Hola | true' }
+    ]
+  },
+  {
+    id: 'variable_get',
+    nombre: 'Usar variable',
+    categoria: 'datos',
+    descripcion: 'Lee una variable del flujo.',
+    schema: [
+      { key: 'variable', label: 'Nombre variable', type: 'text', required: true, placeholder: 'mi_var' }
+    ]
+  },
+
+  // =========================
+  // 🔄 CONTROL Y DECISIONES (preparado para futuras funciones)
+  // =========================
+  {
+    id: 'pausa',
+    nombre: 'Hacer una pausa',
+    categoria: 'logica',
+    descripcion: 'Detiene la ejecución por algunos segundos.',
+    schema: [
+      { key: 'segundos', label: 'Segundos', type: 'number', required: true, placeholder: '1' }
+    ]
+  },
+
+  // =========================
+  // 💾 GUARDAR INFORMACIÓN
   // =========================
   {
     id: 'escribir_csv',
-    nombre: 'Escribir CSV',
+    nombre: 'Guardar como CSV',
     categoria: 'escritura',
     descripcion: 'Escribe una variable a CSV.',
     schema: [
@@ -226,7 +177,7 @@ export const FUNCTION_CATALOG = [
   },
   {
     id: 'escribir_excel',
-    nombre: 'Escribir Excel',
+    nombre: 'Guardar como Excel',
     categoria: 'escritura',
     descripcion: 'Escribe una variable a Excel.',
     schema: [
@@ -236,7 +187,7 @@ export const FUNCTION_CATALOG = [
   },
   {
     id: 'escribir_txt',
-    nombre: 'Escribir TXT',
+    nombre: 'Guardar como TXT',
     categoria: 'escritura',
     descripcion: 'Escribe una variable a TXT con delimitador.',
     schema: [
@@ -247,7 +198,7 @@ export const FUNCTION_CATALOG = [
   },
   {
     id: 'excel_escribir_rango',
-    nombre: 'Excel: Escribir rango / Append',
+    nombre: 'Actualizar Excel existente',
     categoria: 'escritura',
     descripcion: 'Escribe en un rango o agrega filas al final.',
     schema: [
@@ -260,7 +211,7 @@ export const FUNCTION_CATALOG = [
   },
   {
     id: 'excel_crear_hoja',
-    nombre: 'Excel: Crear hoja',
+    nombre: 'Crear hoja en Excel',
     categoria: 'escritura',
     descripcion: 'Crea una hoja en un libro existente.',
     schema: [
@@ -269,10 +220,14 @@ export const FUNCTION_CATALOG = [
       { key: 'si_existe',   label: 'Si existe',      type: 'select', required: true, options: ['reemplazar','renombrar','error'] }
     ]
   },
+
+  // =========================
+  // 📁 GESTIÓN DE ARCHIVOS
+  // =========================
   {
     id: 'archivo_mover',
-    nombre: 'Archivo: Mover',
-    categoria: 'escritura',
+    nombre: 'Mover archivo',
+    categoria: 'archivos',
     descripcion: 'Mueve un archivo de origen a destino.',
     schema: [
       { key: 'origen',   label: 'Origen',   type: 'text', required: true },
@@ -282,8 +237,8 @@ export const FUNCTION_CATALOG = [
   },
   {
     id: 'archivo_copiar',
-    nombre: 'Archivo: Copiar',
-    categoria: 'escritura',
+    nombre: 'Copiar archivo',
+    categoria: 'archivos',
     descripcion: 'Copia un archivo a destino.',
     schema: [
       { key: 'origen',   label: 'Origen',   type: 'text', required: true },
@@ -293,8 +248,8 @@ export const FUNCTION_CATALOG = [
   },
   {
     id: 'archivo_borrar',
-    nombre: 'Archivo: Borrar',
-    categoria: 'escritura',
+    nombre: 'Eliminar archivo',
+    categoria: 'archivos',
     descripcion: 'Elimina un archivo.',
     schema: [
       { key: 'origen', label: 'Ruta a borrar', type: 'text', required: true }
@@ -302,11 +257,90 @@ export const FUNCTION_CATALOG = [
   },
   {
     id: 'carpeta_crear',
-    nombre: 'Carpeta: Crear',
-    categoria: 'escritura',
+    nombre: 'Crear carpeta',
+    categoria: 'archivos',
     descripcion: 'Crea una carpeta (mkdir -p).',
     schema: [
       { key: 'ruta', label: 'Ruta de carpeta', type: 'text', required: true }
     ]
+  },
+
+  // =========================
+  // 💬 PREGUNTAR AL USUARIO
+  // =========================
+  {
+    id: 'dialogo_seleccionar_archivo',
+    nombre: 'Elegir archivo',
+    categoria: 'dialogos',
+    descripcion: 'Abre un diálogo para elegir archivo y guarda la ruta.',
+    schema: [
+      { key: 'filtro',  label: 'Filtro (ej. *.xlsx;*.csv)', type: 'text', required: false },
+      { key: 'nombre_personalizado', label: 'Nombre variable (opcional)', type: 'text', required: false }
+    ]
+  },
+  {
+    id: 'dialogo_seleccionar_carpeta',
+    nombre: 'Elegir carpeta',
+    categoria: 'dialogos',
+    descripcion: 'Abre un diálogo para elegir carpeta y guarda la ruta.',
+    schema: [
+      { key: 'nombre_personalizado', label: 'Nombre variable (opcional)', type: 'text', required: false }
+    ]
+  },
+
+  // =========================
+  // ⚙️ HERRAMIENTAS DEL SISTEMA
+  // =========================
+  {
+    id: 'exportar_json',
+    nombre: 'Exportar flujo (JSON/XML)',
+    categoria: 'sistema',
+    descripcion: 'Exporta el flujo actual.',
+    schema: []
+  },
+  {
+    id: 'ejecutar_flujo',
+    nombre: 'Ejecutar flujo',
+    categoria: 'sistema',
+    descripcion: 'Ejecuta el JSON generado.',
+    schema: []
+  },
+
+  // =========================
+  // 🏁 FINALIZACIÓN
+  // =========================
+  {
+    id: 'cerrar_navegador',
+    nombre: 'Cerrar navegador',
+    categoria: 'finalizacion',
+    descripcion: 'Cierra el navegador o una URL específica.',
+    schema: [
+      { key: 'url', label: 'URL específica (opcional)', type: 'url', required: false }
+    ]
+  },
+  {
+    id: 'cerrar_documento',
+    nombre: 'Cerrar documento',
+    categoria: 'finalizacion',
+    descripcion: 'Cierra el archivo en uso.',
+    schema: [
+      { key: 'forzar', label: 'Forzar cierre', type: 'select', required: true, options: ['no','sí'] }
+    ]
+  },
+  {
+    id: 'cerrar_app',
+    nombre: 'Cerrar aplicación',
+    categoria: 'finalizacion',
+    descripcion: 'Cierra la aplicación objetivo.',
+    schema: [
+      { key: 'titulo', label: 'Título de ventana (opcional)', type: 'text', required: false }
+    ]
+  },
+  {
+    id: 'finalizar_todo',
+    nombre: 'Finalizar flujo',
+    categoria: 'finalizacion',
+    descripcion: 'Finaliza y limpia recursos.',
+    schema: []
   }
 ];
