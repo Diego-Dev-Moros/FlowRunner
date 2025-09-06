@@ -5,22 +5,41 @@ Este archivo sigue el formato de **[Keep a Changelog](https://keepachangelog.com
 
 ## [Unreleased]
 ### Added
-- (Ejemplo) Nueva acción: `carpeta_listar` con patrón de búsqueda.
+- 🏗️ **ARQUITECTURA MODULAR COMPLETA**: Nueva estructura `modules/actions/` con auto-discovery
+- 🔧 **ActionRegistry**: Sistema de registro automático de acciones con decoradores `@action`
+- 🎯 **FlowExecutor**: Motor de ejecución mejorado con gestión de contexto
+- 📁 **Organización por dominios**: control/, data/, dialogs/, navigation/, files/, finalization/
+- 🛠️ **Utilidades consolidadas**: modules/utils/ con data_io, web_automation, dialogs
+- 🚀 **12 NUEVAS ACCIONES**: Duplicamos funcionalidad (24 total en 8 categorías)
+  - **Navegación Web**: abrir_pagina, cambiar_pagina, maximizar_navegador  
+  - **Gestión de Archivos**: crear_carpeta, mover_archivo, copiar_archivo, eliminar_archivo
+  - **Escritura de Datos**: escribir_csv, escribir_excel, escribir_txt
+  - **Finalización**: cerrar_navegador, finalizar_todo
+- 🎨 **Frontend reorganizado**: Catálogo con emojis y nuevas categorías
+- 🧪 **Sistema de testing**: test_registry.py y test_integration.py
 
 ### Changed
-- (Ejemplo) UI: Zoom con Ctrl + rueda y pan con Space + arrastrar.
+- 🌐 **NAVEGADOR EN MODO APP**: Fija problema de apertura en pestañas
+- 📊 **Detección de navegadores**: Chrome/Edge con fallback automático
+- 🔄 **Mejora en context management**: Variables y driver state unificados
+- 📋 **Catálogo UI**: Nuevas categorías con iconos emoji (🚀🌐📖📊💬📁🏁)
 
 ### Fixed
-- (Ejemplo) Reconexión de edges al eliminar nodos intermedios.
-
-### Deprecated
-- (Ejemplo) Acción `excel_exportar_legacy` (usar `escribir_excel`).
+- 🐛 **Browser app mode**: Navegador ahora abre como aplicación independiente
+- 🔧 **Import dependencies**: Eliminadas dependencias circulares
+- ⚡ **Performance**: Auto-discovery optimizado para carga rápida
 
 ### Removed
-- (Ejemplo) Eliminado código muerto en `extras.py`.
+- 🗑️ **Arquitectura legacy eliminada**:
+  - modules/funciones/ (estructura monolítica antigua)
+  - modules/config.py (mapeo manual de acciones)
+  - modules/helpers.py (utilidades obsoletas)
+  - modules/funciones/extras.py (8.5KB de código monolítico)
+- 🧹 **Código duplicado**: Consolidación de funciones similares
 
 ### Security
-- (Ejemplo) Validación de rutas para evitar path traversal.
+- 🛡️ **Validación mejorada**: Parámetros requeridos y tipos de datos
+- 🔒 **Path safety**: Validación de rutas en operaciones de archivos
 
 ---
 
