@@ -1,11 +1,10 @@
 # index.py
 import os
 import json
-import shutil
 import eel
-from eel import browsers
-from modules.funciones.extras import run_flow as engine_run_flow  # motor de ejecución
-import modules.config as appcfg
+from modules.core import FlowExecutor, ActionRegistry
+import modules.actions  # Esto iniciará el auto-registro
+from modules.browser_config import create_browser_config
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 eel.init(BASE_DIR, allowed_extensions=['.js', '.html', '.css'])
@@ -19,7 +18,11 @@ def _notify(payload):
 @eel.expose
 def run_flow(flow):
     print('RUN_FLOW <-', json.dumps(flow, indent=2, ensure_ascii=False))
-    result = engine_run_flow(flow, notifier=_notify)
+    
+    # Usar el nuevo executor
+    executor = FlowExecutor(notifier=_notify)
+    result = executor.execute_flow(flow)
+    
     print('RUN_FLOW ->', json.dumps(result, indent=2, ensure_ascii=False))
     return result
 
@@ -44,43 +47,16 @@ def pause_run():
 @eel.expose
 def get_enabled_types():
     try:
-        enabled = getattr(appcfg, 'ENABLED_TYPES', set()) or set()
-        return list(enabled)
-    except Exception:
+        # Usar el nuevo registry para obtener todos los tipos registrados
+        return ActionRegistry.get_enabled_types()
+    except Exception as e:
+        print(f"Error obteniendo tipos habilitados: {e}")
+        # Fallback: devolver lista vacía
         return []
 
 # -------------------------
-# Navegador: CHROME (app) -> EDGE (app) -> normal -> sin navegador
+# Configuración de navegador modularizada
 # -------------------------
-def _which_browser():
-    pf   = os.environ.get('ProgramFiles', r"C:\Program Files")
-    pf86 = os.environ.get('ProgramFiles(x86)', r"C:\Program Files (x86)")
-    lad  = os.environ.get('LOCALAPPDATA', os.path.expanduser(r"~\AppData\Local"))
-
-    chrome = next((p for p in [
-        os.path.join(pf,   r"Google\Chrome\Application\chrome.exe"),
-        os.path.join(pf86, r"Google\Chrome\Application\chrome.exe"),
-        os.path.join(lad,  r"Google\Chrome\Application\chrome.exe"),
-        shutil.which("chrome"),
-        shutil.which("chrome.exe"),
-    ] if p and os.path.exists(p)), None)
-
-    edge = next((p for p in [
-        os.path.join(pf,   r"Microsoft\Edge\Application\msedge.exe"),
-        os.path.join(pf86, r"Microsoft\Edge\Application\msedge.exe"),
-        shutil.which("msedge"),
-        shutil.which("msedge.exe"),
-    ] if p and os.path.exists(p)), None)
-
-    return {"chrome": chrome, "edge": edge}
-
-def _register_paths(paths):
-    if paths.get("chrome"):
-        browsers.set_path('chrome', paths["chrome"])
-        browsers.set_path('chrome-app', paths["chrome"])  # modo app
-    if paths.get("edge"):
-        browsers.set_path('edge', paths["edge"])
-        browsers.set_path('edge-app', paths["edge"])      # modo app
 
 if __name__ == '__main__':
     page = 'vistas/servicio.html'
@@ -88,22 +64,21 @@ if __name__ == '__main__':
     port = 8000
     size = (1280, 800)
 
-    paths = _which_browser()
-    _register_paths(paths)
-
-    modes = []
-    if paths.get("chrome"): modes += ['chrome-app', 'chrome']
-    if paths.get("edge"):   modes += ['edge-app',   'edge']
-    modes.append(None)  # servir sin abrir navegador
-
-    for mode in modes:
-        try:
-            if mode is None:
-                print(f"[INFO] Sin navegador. Abrí manualmente: http://{host}:{port}/{page}")
-            else:
-                print(f"[INFO] Intentando abrir en modo: {mode}")
-            eel.start(page, mode=mode, size=size, host=host, port=port, block=True)
-            break
-        except OSError as e:
-            print(f"[WARN] Falló {mode}: {e}")
-            continue
+    # Usar el nuevo sistema de configuración de navegador
+    browser_config = create_browser_config()
+    
+    print("[INFO] Iniciando FlowRunner...")
+    print(f"[INFO] Navegadores detectados: {list(browser_config.detected_browsers.keys())}")
+    
+    success, mode_used = browser_config.launch_app(page, host, port, size)
+    
+    if success:
+        if mode_used.endswith('-app'):
+            print(f"[SUCCESS] FlowRunner iniciado en modo aplicación: {mode_used}")
+        elif mode_used in ['chrome', 'edge']:
+            print(f"[SUCCESS] FlowRunner iniciado en modo pestaña: {mode_used}")
+        elif mode_used == 'server-only':
+            print(f"[SUCCESS] Servidor iniciado. Abrir manualmente: http://{host}:{port}/{page}")
+    else:
+        print("[ERROR] No se pudo iniciar FlowRunner")
+        input("Presiona Enter para salir...")

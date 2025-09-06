@@ -5,12 +5,29 @@ export const AUTOCONNECT_NEW_NODES = true;
 export const COLOR_EDGE = '#FF6600';              // naranja PwC
 export const COLOR_EDGE_HALO = 'rgba(255,102,0,0.12)';
 
-// Títulos por categoría (para crear secciones dinámicas en la barra)
+// Títulos por categoría mejorados (más amigables para usuarios finales)
 export const CAT_TITLES = {
-  inicio: 'Acciones de Inicio',
-  proceso: 'Acciones de Proceso',
-  cierre: 'Acciones de Cierre',
-  lectura: 'Acciones de Lectura',
-  escritura: 'Acciones de Escritura',
-  basicas: 'Funciones Básicas',
+  // Flujo principal
+  inicio: '🚀 Inicio & Configuración',
+  navegacion: '🌐 Navegación Web',
+  logica: '🔄 Control y Decisiones',
+  finalizacion: '🏁 Finalización',
+  
+  // Operaciones de datos
+  lectura: '📖 Leer Información',
+  escritura: '💾 Guardar Información', 
+  archivos: '📁 Gestión de Archivos',
+  datos: '📊 Procesar Datos',
+  
+  // Interacción y sistema
+  dialogos: '💬 Preguntar al Usuario',
+  sistema: '⚙️ Herramientas del Sistema',
+  utilidades: '🔧 Funciones Útiles'
 };
+
+// Orden de visualización optimizado para flujo de trabajo lógico
+export const CATEGORY_ORDER = [
+  'inicio', 'navegacion', 'lectura', 'datos', 
+  'logica', 'escritura', 'archivos', 
+  'dialogos', 'sistema', 'utilidades', 'finalizacion'
+];
