@@ -1,38 +1,67 @@
 /* =============================================================================
    ESTILOS ESPECÍFICOS DE NODOS - FlowRunner
+   Sistema unificado de formas, puertos y estados
    ============================================================================= */
 
-/* ===== ESTRUCTURA BASE DE NODOS ===== */
+/* ═════ ESTRUCTURA BASE DE NODOS ═════ */
 .node {
-  position: absolute; 
+  position: absolute !important; 
   min-width: 200px; 
   max-width: 340px;
   background: #fff; 
-  border: 1px solid var(--border); 
+  border: 1px solid var(--border, #e2e2e2); 
   border-radius: .75rem;
-  box-shadow: var(--shadow); 
-  overflow: hidden; 
+  box-shadow: var(--shadow, 0 2px 8px rgba(0,0,0,.08)); 
+  overflow: visible !important; /* Permite que las formas se vean completas */
   user-select: none; 
   color: #333;
+  transform-origin: center center; /* Para rotaciones futuras */
 }
 
+/* Pseudo-elemento base para formas (detrás del contenido) */
+.node::before {
+  content: "";
+  position: absolute;
+  inset: 4px; /* Margen interno para no cubrir bordes */
+  z-index: -1; /* Detrás del contenido del nodo */
+  background: #fff;
+  border: 1px solid var(--border, #e2e2e2);
+  border-radius: 12px;
+  box-shadow: var(--shadow, 0 2px 8px rgba(0,0,0,.08));
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Transición suave */
+}
+
+/* Contenido del nodo debe estar sobre el pseudo-elemento */
+.node > * {
+  position: relative;
+  z-index: 2; /* Incrementado para estar bien sobre las formas */
+}
+
+/* ═════ CABECERA DEL NODO ═════ */
 .node-header {
   display: flex; 
   align-items: center; 
   justify-content: space-between; 
   gap: .5rem;
   padding: .5rem .6rem;
-  background: linear-gradient(90deg, var(--pwc-orange), #ff7f2a);
+  background: linear-gradient(90deg, var(--pwc-orange, #FF6600), #ff7f2a);
   color: #fff; 
   font-weight: 700; 
   font-size: .9rem; 
   cursor: move;
   border-bottom: 1px solid #f3f3f3;
+  position: relative;
+  z-index: 3;
+  border-radius: 8px;
+  margin: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(8px); /* Efecto de cristal */
 }
 
 .node-title { 
   color: #fff; 
   font-weight: 700; 
+  flex: 1;
 }
 
 .node-close { 
@@ -42,124 +71,267 @@
   line-height: 1; 
   cursor: pointer; 
   color: #fff; 
-  opacity: .9; 
+  opacity: .9;
+  padding: 2px;
+  border-radius: 3px;
+  transition: opacity .2s ease;
 }
 
 .node-close:hover { 
   opacity: 1; 
+  background: rgba(255, 255, 255, 0.2);
 }
 
-.node-body { 
-  padding: .6rem .7rem; 
-  font-size: .85rem; 
-  color: #444; 
-}
-
-.node .badge { 
-  display: inline-block; 
-  font-size: .7rem; 
-  background: #ffe1d1; 
-  color: #b24a00; 
-  padding: .1rem .4rem; 
-  border-radius: .4rem; 
-}
-
-.node.selected { 
-  outline: 2px solid #3b82f6; 
-  outline-offset: -2px; 
-}
-
-/* ===== PUERTOS DE CONEXIÓN ===== */
-.ports { 
-  display: flex; 
-  justify-content: space-between; 
-  padding: 8px 10px; 
-  gap: 8px; 
-}
-
-.port { 
-  width: 12px; 
-  height: 12px; 
-  border-radius: 50%; 
-  background: #999; 
-  cursor: pointer; 
-}
-
-.port-in { 
-  background: #666; 
-}
-
-.port-out { 
-  background: var(--pwc-orange); 
-}
-
-.port.target { 
-  outline: 3px solid rgba(255,102,0,.25); 
-}
-
-/* ===== ESTADOS DE EJECUCIÓN ===== */
-.node.status-running { 
-  box-shadow: 0 0 0 3px rgba(59,130,246,.25); 
-  border-color: #3b82f6; 
-}
-
-.node.status-ok { 
-  box-shadow: 0 0 0 3px rgba(16,185,129,.25); 
-  border-color: #10b981; 
-}
-
-.node.status-error { 
-  box-shadow: 0 0 0 3px rgba(239,68,68,.25); 
-  border-color: #ef4444; 
-}
-
-/* ===== FORMAS ESPECÍFICAS POR TIPO DE FUNCIÓN ===== */
-
-/* Condicionales y Bucles - TRIÁNGULOS SIMPLES */
-div.node.shape-triangle {
-  border-radius: .75rem;
-  border-left: 4px solid #ef4444;
+/* ═════ CUERPO DEL NODO ═════ */
+.node-body {
+  padding: .6rem;
   position: relative;
+  z-index: 3;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  margin: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(8px); /* Efecto de cristal */
 }
 
-div.node.shape-triangle .node-header {
-  background: linear-gradient(90deg, #FF6600, #ff7f2a);
-  border-left: 2px solid #ef4444;
-  border-radius: .75rem .75rem 0 0;
+/* ═════ PUERTOS DE CONEXIÓN ═════ */
+.ports {
+  position: relative;
+  z-index: 4; /* Encima de todo para permitir interacción */
+  background: transparent;
+  box-shadow: none;
+  margin: 4px 8px;
+  padding: 4px;
 }
 
-/* Todos los demás nodos mantienen forma original */
-div.node.shape-circle {
-  /* Sin modificaciones adicionales - mantiene estilos base del .node */
+.port {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #666;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  cursor: pointer;
+  transition: all .2s ease;
+  z-index: 5;
 }
 
-/* ===== HOVER Y INTERACCIONES ===== */
-.node:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow), 0 4px 12px rgba(0,0,0,.12);
-  transition: all 0.2s ease;
+.port-in {
+  background: #10b981; /* Verde para entrada */
 }
 
-.node.dragging {
-  transform: rotate(2deg);
-  box-shadow: 0 8px 25px rgba(0,0,0,.15);
-  z-index: 1000;
+.port-out {
+  background: #f59e0b; /* Naranja para salida */
 }
 
-/* ===== RESPONSIVE ===== */
+/* Posicionamiento de puertos */
+.port.W { left: -6px; top: 50%; transform: translateY(-50%); }
+.port.E { right: -6px; top: 50%; transform: translateY(-50%); }
+.port.N { top: -6px; left: 50%; transform: translateX(-50%); }
+.port.S { bottom: -6px; left: 50%; transform: translateX(-50%); }
+
+.port:hover {
+  transform: scale(1.3);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.port.target {
+  background: #e11d48; /* Rosa para destacar targets */
+  animation: port-pulse 1s ease-in-out infinite;
+}
+
+@keyframes port-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+/* ═════ ESTADOS DEL NODO ═════ */
+.node.selected {
+  border-color: var(--pwc-orange, #FF6600);
+  box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.3), var(--shadow, 0 2px 8px rgba(0,0,0,.08));
+}
+
+.node.status-running {
+  border-color: #3b82f6;
+  animation: node-running 1.5s ease-in-out infinite;
+}
+
+@keyframes node-running {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3); }
+  50% { box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.5); }
+}
+
+.node.status-ok {
+  border-color: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+}
+
+.node.status-error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3);
+  animation: node-error 2s ease-in-out infinite;
+}
+
+@keyframes node-error {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3); }
+  25% { box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.5); }
+  50% { box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3); }
+  75% { box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.5); }
+}
+
+/* ═════ FORMAS ESPECÍFICAS POR TIPO - SISTEMA UNIFICADO ═════ */
+
+/* 1. DECISIONES (ROMBO) - Condicionales */
+.node--decision::before {
+  border-radius: 0;
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  background: linear-gradient(135deg, #fff8f0 0%, #ffefd6 100%);
+  border-color: #f59e0b;
+  border-width: 2px;
+  box-shadow: 
+    0 4px 12px rgba(245, 158, 11, 0.15),
+    0 2px 4px rgba(245, 158, 11, 0.1);
+  animation: decision-pulse 3s ease-in-out infinite;
+}
+
+@keyframes decision-pulse {
+  0%, 100% { box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15), 0 2px 4px rgba(245, 158, 11, 0.1); }
+  50% { box-shadow: 0 6px 20px rgba(245, 158, 11, 0.25), 0 3px 6px rgba(245, 158, 11, 0.15); }
+}
+
+/* 2. LOOPS (HEXÁGONO CON MARCA INTERIOR) */
+.node--loop::before {
+  border-radius: 10px;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border-color: #10b981;
+  border-width: 2px;
+  box-shadow: 
+    inset 0 0 0 4px rgba(16, 185, 129, 0.1),  /* Marca interior distintiva */
+    0 4px 12px rgba(16, 185, 129, 0.15),
+    0 2px 4px rgba(16, 185, 129, 0.1);
+  animation: loop-rotate 6s linear infinite;
+}
+
+@keyframes loop-rotate {
+  0% { box-shadow: inset 0 0 0 4px rgba(16, 185, 129, 0.1), 0 4px 12px rgba(16, 185, 129, 0.15), 0 2px 4px rgba(16, 185, 129, 0.1); }
+  25% { box-shadow: inset 0 0 0 6px rgba(16, 185, 129, 0.15), 0 4px 12px rgba(16, 185, 129, 0.15), 0 2px 4px rgba(16, 185, 129, 0.1); }
+  50% { box-shadow: inset 0 0 0 4px rgba(16, 185, 129, 0.1), 0 4px 12px rgba(16, 185, 129, 0.15), 0 2px 4px rgba(16, 185, 129, 0.1); }
+  75% { box-shadow: inset 0 0 0 6px rgba(16, 185, 129, 0.15), 0 4px 12px rgba(16, 185, 129, 0.15), 0 2px 4px rgba(16, 185, 129, 0.1); }
+  100% { box-shadow: inset 0 0 0 4px rgba(16, 185, 129, 0.1), 0 4px 12px rgba(16, 185, 129, 0.15), 0 2px 4px rgba(16, 185, 129, 0.1); }
+}
+
+/* 3. INICIO/CIERRE (PÍLDORAS) */
+.node--inicio::before,
+.node--cierre::before {
+  border-radius: 999px; /* Forma de píldora/oval */
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-color: #3b82f6;
+  border-width: 2px;
+  box-shadow: 
+    0 4px 12px rgba(59, 130, 246, 0.15),
+    0 2px 4px rgba(59, 130, 246, 0.1);
+}
+
+.node--inicio::before {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border-color: #22c55e;
+  box-shadow: 
+    0 4px 12px rgba(34, 197, 94, 0.15),
+    0 2px 4px rgba(34, 197, 94, 0.1);
+}
+
+.node--cierre::before {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border-color: #ef4444;
+  box-shadow: 
+    0 4px 12px rgba(239, 68, 68, 0.15),
+    0 2px 4px rgba(239, 68, 68, 0.1);
+}
+
+/* ═════ ESTADOS HOVER MEJORADOS ═════ */
+.node--decision:hover::before {
+  transform: scale(1.05) rotate(1deg);
+  box-shadow: 
+    0 8px 25px rgba(245, 158, 11, 0.25),
+    0 4px 8px rgba(245, 158, 11, 0.15);
+}
+
+.node--loop:hover::before {
+  transform: scale(1.03);
+  box-shadow: 
+    inset 0 0 0 6px rgba(16, 185, 129, 0.2),
+    0 8px 25px rgba(16, 185, 129, 0.25),
+    0 4px 8px rgba(16, 185, 129, 0.15);
+}
+
+.node--inicio:hover::before,
+.node--cierre:hover::before {
+  transform: scale(1.03);
+  box-shadow: 
+    0 8px 25px rgba(59, 130, 246, 0.25),
+    0 4px 8px rgba(59, 130, 246, 0.15);
+}
+
+/* ═════ NODO SELECCIONADO - FORMAS ═════ */
+.node.selected::before {
+  border-width: 3px;
+  box-shadow: 
+    0 0 0 3px rgba(255, 102, 0, 0.3), 
+    var(--shadow, 0 2px 8px rgba(0,0,0,.08));
+  animation: selected-glow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes selected-glow {
+  0% { box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.3), var(--shadow, 0 2px 8px rgba(0,0,0,.08)); }
+  100% { box-shadow: 0 0 0 5px rgba(255, 102, 0, 0.4), 0 4px 16px rgba(255, 102, 0, 0.2); }
+}
+
+/* ═════ INDICADOR VISUAL DE TIPO ═════ */
+.node[data-node-shape]::after {
+  content: attr(data-node-shape);
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: #6b7280;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 2px 6px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.node:hover[data-node-shape]::after {
+  opacity: 1;
+}
+
+/* ═════ CLASES POR CATEGORÍA ═════ */
+.node--inicio .node-header { background: linear-gradient(90deg, #22c55e, #16a34a); }
+.node--proceso .node-header { background: linear-gradient(90deg, #3b82f6, #2563eb); }
+.node--cierre .node-header { background: linear-gradient(90deg, #ef4444, #dc2626); }
+.node--lectura .node-header { background: linear-gradient(90deg, #8b5cf6, #7c3aed); }
+.node--escritura .node-header { background: linear-gradient(90deg, #f59e0b, #d97706); }
+.node--basicas .node-header { background: linear-gradient(90deg, #6b7280, #4b5563); }
+
+/* ═════ RESPONSIVIDAD ═════ */
 @media (max-width: 768px) {
   .node {
     min-width: 180px;
-    max-width: 280px;
+    max-width: 300px;
   }
   
   .node-header {
-    font-size: .8rem;
     padding: .4rem .5rem;
+    font-size: .8rem;
   }
   
-  .node-body {
-    font-size: .8rem;
-    padding: .5rem .6rem;
+  .port {
+    width: 10px;
+    height: 10px;
   }
 }

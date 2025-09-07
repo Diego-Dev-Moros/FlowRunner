@@ -1,32 +1,44 @@
-# FlowRunner — Información del proyecto
+# FlowRunner — Información del proyecto [REFACTORIZADO]
 
 ## 1. Propósito
 **FlowRunner** permite **definir y ejecutar flujos** mediante nodos visuales. Su meta es que tareas frecuentes (archivos, Excel, esperas, etc.) se integren de forma **rápida y mantenible**.
 
 ---
 
-## 2. Componentes y responsabilidades
+## 2. Componentes y responsabilidades [ACTUALIZADO]
 
-### 2.1. Frontend (carpeta `vistas/`)
-- **servicio.html**: estructura base (topbar, catálogo, canvas, consola, propiedades).
-- **styles/estilos.css**: tema, nodos, puertos, edges, paneles y **scrollbars personalizados**.
-- **services/main.js**:
-  - Inicializa topbar, catálogo, consola y panel de propiedades.
-  - Maneja **drag & drop** de nodos, **pan (Space + arrastrar)** y **zoom (Ctrl + rueda)**.
-  - Construye/actualiza **edges** en tiempo real.
-  - Serializa a JSON (steps/edges) y **ejecuta** el flujo contra Python.
-  - Centra la vista en el nodo seleccionado/creado (**tecla F** o automático).
-- **services/state.js**: estado fuente de verdad (lista de pasos, edges, seleccionado y resultados).
-- **services/catalog.js**: define **nodos** (typeId, nombre, categoría y **schema** de props).
-- **services/registry.js**: filtra el catálogo según `ENABLED_TYPES` enviado por Python.
-- **services/edges.js**: calcula posiciones y dibuja curvas **Bézier** con flecha.
-- **services/ui/**:
-  - `topbar.js`: Limpiar/Importar/Exportar.
-  - `toolbar.js`: catálogo lateral por categorías (drag & drop).
-  - `properties.js`: genera inputs/selects/textarea a partir del `schema`.
-  - `console.js`: consola (Ejecutar/Detener/Limpiar) y API de logs.
-- **services/io/json.js**: utilidades para import/export de flujos.
-- **services/runtime/**: *glue* para ejecutar/transformar (lado UI).
+### 2.1. Frontend (carpeta `vistas/`) - ARQUITECTURA MODULAR
+
+#### Estructura CSS (Separada)
+- **styles/estilos-clean.css**: Layout grid 3 columnas, topbar, toolbar, consola, props, scrollbars custom (SIN reglas de nodos).
+- **styles/nodes-complete.css**: TODO específico de nodos - formas, puertos, estados, animaciones, sistema unificado de shapes.
+
+#### Estructura JavaScript (Modular)
+- **servicio.html**: estructura base actualizada que carga CSS separado y main-refactored.js
+- **services/main-refactored.js** (150 líneas): Orquestador ligero que coordina módulos
+- **services/app.js**: Bootstrap principal, inicialización de módulos
+- **services/panzoom.js**: Pan (Space+drag) y zoom (Ctrl+wheel) con transform-origin 0,0
+- **services/viewport.js**: Centrado automático, canvas size, hint management
+- **services/edges/**:
+  - `scheduler.js`: RequestAnimationFrame batching para performance
+  - `view.js`: Renderizado SVG optimizado con vector-effect y caching
+- **services/nodes/**:
+  - `view.js`: Creación, montaje, drag, sistema de formas unificado
+  - `ports.js`: Lógica de puertos, pendingConnection, addEdge seguro
+  - `dnd.js`: Drag & drop desde catálogo con cálculo de zoom
+- **services/io/**:
+  - `flow-io.js`: Import/Export JSON con validaciones mejoradas
+- **services/runtime/**:
+  - `bridge.js`: Bridge con Python/Eel, notify_progress, modo demo
+- **services/state.js**: Estado centralized (sin cambios)
+- **services/registry.js**: Registry de tipos (sin cambios)
+- **services/ui/**: Módulos UI existentes (sin cambios importantes)
+
+#### Características Técnicas Clave
+- **Sistema de Formas Unificado**: `.node--decision` (rombo), `.node--loop` (hexágono), `.node--inicio/cierre` (píldoras)
+- **Performance Optimizado**: RAF batching, vector-effect non-scaling-stroke, caching de getBoundingClientRect
+- **Separación de Responsabilidades**: Cada módulo tiene un propósito específico y cohesivo
+- **API Modular**: Funciones exportadas específicas para cada funcionalidad
 
 **Datos clave de la UI**
 - Un **nodo** tiene: `id`, `typeId`, `nombre`, `position:{x,y}`, `props:{...}`.

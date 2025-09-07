@@ -1,7 +1,6 @@
 /**
- * FlowRunner - Main (Orquestador Ligero)
- * Punto de entrada principal que coordina todos los módulos
- * Reducido de 833 líneas a ~150 líneas
+ * FlowRunner - Aplicación principal
+ * Bootstrap y orquestación de módulos
  */
 
 import { setupTopbar } from './ui/topbar.js';
@@ -12,17 +11,13 @@ import * as viewport from './viewport.js';
 import * as bridge from './runtime/bridge.js';
 import * as flowIO from './io/flow-io.js';
 import { setupCanvasDnd } from './nodes/dnd.js';
-import { scheduleEdges } from './edges/scheduler.js';
 import { state } from './state.js';
-
-// Referencias globales
-let uiConsole = null;
 
 /**
  * Inicializa la aplicación FlowRunner
  */
 async function init() {
-  console.log('🚀 Iniciando FlowRunner - Versión Refactorizada...');
+  console.log('🚀 Iniciando FlowRunner...');
   
   try {
     // 1. Configurar topbar con handlers
@@ -36,7 +31,7 @@ async function init() {
     await renderToolbar();
 
     // 3. Configurar consola con handlers
-    uiConsole = setupConsole({
+    const uiConsole = setupConsole({
       onRun: bridge.runFlow,
       onStop: bridge.stopFlow,
       onClear: () => state.clearResults(),
@@ -48,22 +43,17 @@ async function init() {
     await bridge.init();
     await flowIO.init();
 
-    // 5. Conectar consola con otros módulos
-    bridge.setUIConsole(uiConsole);
-    flowIO.setUIConsole(uiConsole);
-
-    // 6. Configurar drag & drop desde catálogo
+    // 5. Configurar drag & drop desde catálogo
     setupCanvasDnd();
 
-    // 7. Configurar listeners globales
-    setupGlobalListeners();
+    // 6. Configurar atajos de teclado globales
+    setupKeyboardShortcuts();
 
-    // 8. Estado inicial
+    // 7. Estado inicial
     viewport.updateCanvasHint();
     viewport.updateCanvasSize();
-    scheduleEdges();
 
-    console.log('✅ FlowRunner iniciado correctamente - Modo Refactorizado');
+    console.log('✅ FlowRunner iniciado correctamente');
     
   } catch (error) {
     console.error('❌ Error iniciando FlowRunner:', error);
@@ -72,30 +62,24 @@ async function init() {
 }
 
 /**
- * Configura listeners globales de la aplicación
+ * Configura atajos de teclado globales
  */
-function setupGlobalListeners() {
-  // Atajo F: Centrar nodo seleccionado
+function setupKeyboardShortcuts() {
   window.addEventListener('keydown', (e) => {
+    // F: Centrar nodo seleccionado
     if (e.key.toLowerCase() === 'f' && state.selectedId) {
       viewport.centerOnStep(state.selectedId, true);
     }
+    
+    // Escape: Deseleccionar nodo
+    if (e.key === 'Escape' && state.selectedId) {
+      // TODO: Implementar deselección
+      console.log('Deseleccionando nodo...');
+    }
   });
-
-  // Redibujar edges en eventos de scroll/resize
-  const workspace = document.getElementById('workspace');
-  if (workspace) {
-    workspace.addEventListener('scroll', scheduleEdges, { passive: true });
-  }
-  
-  window.addEventListener('resize', () => {
-    viewport.updateCanvasSize();
-    scheduleEdges();
-  }, { passive: true });
 }
 
 // Inicializar cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', init);
 
-// Exportar función de inicialización para uso externo si es necesario
 export { init };
