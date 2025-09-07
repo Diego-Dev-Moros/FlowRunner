@@ -22,3 +22,16 @@ export async function runFunction(defId, props) {
 }
 
 function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+export function formatRunnerError(error) {
+  if (typeof error === 'string') {
+    return error;
+  }
+  if (error && error.message) {
+    return error.message;
+  }
+  if (error && error.error) {
+    return error.error;
+  }
+  return 'Error desconocido en la ejecución';
+}

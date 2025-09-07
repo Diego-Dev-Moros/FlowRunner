@@ -5,9 +5,58 @@ import eel
 from modules.core import FlowExecutor, ActionRegistry
 import modules.actions  # Esto iniciará el auto-registro
 from modules.browser_config import create_browser_config
+from modules.utils.logging import FlowLogger
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 eel.init(BASE_DIR, allowed_extensions=['.js', '.html', '.css'])
+
+# Inicializar logger
+logger = FlowLogger()
+
+def _notify(payload):
+    try:
+        eel.notify_progress(payload)
+    except Exception:
+        pass
+
+@eel.expose
+def log_frontend_error(error_data):
+    """Log errores del frontend al sistema de logging"""
+    try:
+        logger.log_error(
+            error=f"[FRONTEND] {error_data.get('message', 'Error desconocido')}",
+            context={
+                'error_type': error_data.get('type', 'frontend_error'),
+                'filename': error_data.get('filename'),
+                'line': error_data.get('line'),
+                'column': error_data.get('column'),
+                'stack': error_data.get('stack'),
+                'url': error_data.get('url'),
+                'timestamp': error_data.get('timestamp')
+            }
+        )
+        return True
+    except Exception as e:
+        print(f"Error al registrar error del frontend: {e}")
+        return False
+
+@eel.expose
+def log_frontend_warning(warning_data):
+    """Log warnings del frontend al sistema de logging"""
+    try:
+        logger.log_user(
+            f"[FRONTEND WARNING] {warning_data.get('message', 'Warning desconocido')}",
+            level="WARNING",
+            context={
+                'type': warning_data.get('type', 'frontend_warning'),
+                'url': warning_data.get('url'),
+                'timestamp': warning_data.get('timestamp')
+            }
+        )
+        return True
+    except Exception as e:
+        print(f"Error al registrar warning del frontend: {e}")
+        return False
 
 def _notify(payload):
     try:

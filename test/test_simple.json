@@ -1,0 +1,45 @@
+{
+  "name": "Test Simple Phase 2",
+  "description": "Flujo simple para probar Phase 2",
+  "version": "1.0",
+  "steps": [
+    {
+      "id": "step1",
+      "type": "variable_set",
+      "props": {
+        "variable": "contador",
+        "valor": "0"
+      }
+    },
+    {
+      "id": "step2",
+      "type": "bucle_for_rango",
+      "props": {
+        "variable_contador": "i",
+        "inicio": "1",
+        "fin": "3",
+        "paso": "1"
+      }
+    },
+    {
+      "id": "step3",
+      "type": "delay_dinamico",
+      "props": {
+        "tipo_delay": "fijo",
+        "valor_base": "0.1"
+      }
+    },
+    {
+      "id": "step4",
+      "type": "variable_get",
+      "props": {
+        "variable": "i"
+      }
+    }
+  ],
+  "edges": [
+    {"id": "e1", "source": "step1", "target": "step2"},
+    {"id": "e2", "source": "step2", "target": "step3"},
+    {"id": "e3", "source": "step3", "target": "step4"}
+  ]
+}

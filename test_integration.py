@@ -1,23 +1,59 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Prueba de integración para verificar que el nuevo sistema de acciones
-funciona correctamente con el frontend.
+Test de integración para los flujos de Phase 2.
+Prueba los flujos completos usando el executor.
 """
 
 import sys
 import os
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import json
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from modules.core import ActionRegistry, FlowExecutor, FlowContext
-from modules.actions import *  # Import all action modules
+from modules.core.executor import FlowExecutor
+from modules.utils.logging import FlowLogger
 
-def test_action_system():
-    """Prueba el sistema completo de acciones."""
-    print("=== PRUEBA DE INTEGRACIÓN DEL SISTEMA DE ACCIONES ===\n")
+def load_flow(filename: str) -> dict:
+    """Carga un flujo desde archivo JSON."""
+    try:
+        with open(filename, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"Error cargando flujo {filename}: {e}")
+        return None
+
+def test_flow_execution(flow_file: str, flow_name: str):
+    """Prueba la ejecución de un flujo."""
+    print(f"\n🔄 PROBANDO: {flow_name}")
+    print("=" * 50)
     
-    # Verificar que las acciones están registradas
-    actions = ActionRegistry.list_all_actions()
+    # Cargar flujo
+    flow = load_flow(flow_file)
+    if not flow:
+        print(f"❌ No se pudo cargar el flujo: {flow_file}")
+        return False
+    
+    # Ejecutar flujo
+    executor = FlowExecutor()
+    
+    try:
+        result = executor.execute_flow(flow)
+        
+        success = result.get('ok', False)
+        if success:
+            print(f"✅ {flow_name} - ÉXITO")
+            print(f"   📊 Variables creadas: {len(result.get('variables', []))}")
+            if result.get('message'):
+                print(f"   💬 Mensaje: {result['message']}")
+        else:
+            print(f"❌ {flow_name} - ERROR")
+            print(f"   🚨 Error: {result.get('error', 'Error desconocido')}")
+        
+        return success
+        
+    except Exception as e:
+        print(f"❌ {flow_name} - EXCEPCIÓN: {str(e)}")
+        return False
     categories = ActionRegistry.list_by_category()
     print(f"✓ Acciones registradas: {len(actions)}")
     print(f"✓ Categorías disponibles: {list(categories.keys())}")

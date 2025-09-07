@@ -1,0 +1,173 @@
+{
+  "name": "Flujo Complejo - Phase 2 Avanzado",
+  "description": "Flujo complejo que prueba múltiples características avanzadas de Phase 2",
+  "version": "2.0", 
+  "created": "2025-09-06",
+  "steps": [
+    {
+      "id": "setup_datos",
+      "typeId": "variable_set",
+      "nombre": "Configurar Dataset",
+      "props": {
+        "nombre": "dataset",
+        "valor": "[{\"nombre\": \"Juan\", \"edad\": 25, \"activo\": true}, {\"nombre\": \"Maria\", \"edad\": 30, \"activo\": false}, {\"nombre\": \"Carlos\", \"edad\": 35, \"activo\": true}]"
+      },
+      "position": { "x": 100, "y": 100 }
+    },
+    {
+      "id": "setup_config",
+      "typeId": "variable_set",
+      "nombre": "Configurar Variables",
+      "props": {
+        "nombre": "max_reintentos",
+        "valor": "3"
+      },
+      "position": { "x": 300, "y": 100 }
+    },
+    {
+      "id": "try_catch_setup",
+      "typeId": "try_catch_finally",
+      "nombre": "Manejo de Errores",
+      "props": {
+        "accion_catch": "retry",
+        "variable_error": "ultimo_error",
+        "max_reintentos": "3",
+        "delay_reintento": "1000"
+      },
+      "position": { "x": 200, "y": 200 }
+    },
+    {
+      "id": "bucle_lista_personas",
+      "typeId": "bucle_for_lista",
+      "nombre": "Procesar Personas",
+      "props": {
+        "variable_elemento": "persona",
+        "variable_indice": "idx",
+        "lista_variable": "dataset",
+        "max_iteraciones": "10"
+      },
+      "position": { "x": 200, "y": 300 }
+    },
+    {
+      "id": "validar_edad",
+      "typeId": "validar_variable",
+      "nombre": "Validar Edad",
+      "props": {
+        "nombre_variable": "persona.edad",
+        "tipo_validacion": "numero", 
+        "es_obligatoria": "true",
+        "resultado_variable": "edad_valida"
+      },
+      "position": { "x": 100, "y": 400 }
+    },
+    {
+      "id": "condicion_compleja",
+      "typeId": "condicional_and_or",
+      "nombre": "Validación Compleja",
+      "props": {
+        "condicion_1": "persona.edad >= 18",
+        "condicion_2": "persona.activo == true",
+        "operador": "and",
+        "resultado_variable": "usuario_valido"
+      },
+      "position": { "x": 300, "y": 400 }
+    },
+    {
+      "id": "switch_por_edad",
+      "typeId": "condicional_multiple", 
+      "nombre": "Categorizar por Edad",
+      "props": {
+        "variable_evaluacion": "persona.edad",
+        "casos": "{\"25\": \"joven\", \"30\": \"adulto\", \"35\": \"maduro\", \"default\": \"edad_indefinida\"}",
+        "comparacion_estricta": "false",
+        "resultado_variable": "categoria_edad"
+      },
+      "position": { "x": 200, "y": 500 }
+    },
+    {
+      "id": "delay_progresivo",
+      "typeId": "delay_dinamico",
+      "nombre": "Delay Progresivo",
+      "props": {
+        "tipo_delay": "progresivo",
+        "valor_base": "0.1",
+        "contador_variable": "delay_counter"
+      },
+      "position": { "x": 200, "y": 600 }
+    },
+    {
+      "id": "repetir_validacion",
+      "typeId": "repetir_hasta",
+      "nombre": "Repetir Validación",
+      "props": {
+        "variable_condicion": "usuario_valido",
+        "valor_objetivo": "true",
+        "operador": "==",
+        "max_iteraciones": "5",
+        "delay_ms": "200"
+      },
+      "position": { "x": 100, "y": 700 }
+    },
+    {
+      "id": "esperar_condicion_final",
+      "typeId": "esperar_condicion",
+      "nombre": "Esperar Validación Final",
+      "props": {
+        "condicion_espera": "categoria_edad != 'edad_indefinida'",
+        "timeout_segundos": "5",
+        "intervalo_verificacion": "0.5",
+        "accion_timeout": "continue"
+      },
+      "position": { "x": 300, "y": 700 }
+    },
+    {
+      "id": "resultado_final",
+      "typeId": "variables_listar",
+      "nombre": "Mostrar Resultados",
+      "props": {},
+      "position": { "x": 200, "y": 800 }
+    }
+  ],
+  "edges": [
+    {
+      "from": "setup_datos",
+      "to": "setup_config"
+    },
+    {
+      "from": "setup_config", 
+      "to": "try_catch_setup"
+    },
+    {
+      "from": "try_catch_setup",
+      "to": "bucle_lista_personas"
+    },
+    {
+      "from": "bucle_lista_personas",
+      "to": "validar_edad"
+    },
+    {
+      "from": "validar_edad",
+      "to": "condicion_compleja"
+    },
+    {
+      "from": "condicion_compleja",
+      "to": "switch_por_edad"
+    },
+    {
+      "from": "switch_por_edad",
+      "to": "delay_progresivo"
+    },
+    {
+      "from": "delay_progresivo",
+      "to": "repetir_validacion"
+    },
+    {
+      "from": "repetir_validacion",
+      "to": "esperar_condicion_final"
+    },
+    {
+      "from": "esperar_condicion_final",
+      "to": "resultado_final"
+    }
+  ]
+}

@@ -1,11 +1,14 @@
-// vistas/services/main.js
 import { state } from './state.js';
-import * as registry from './registry.js';
+import { registry } from './registry.js';
+import * as edges from './edges.js';
+import * as canvas from './canvas.js';
 import { renderPropsPanel } from './ui/properties.js';
+import { formatRunnerError } from './runtime/handlers.js';
+import toast from './ui/toast.js';
 import { setupTopbar } from './ui/topbar.js';
 import { setupConsole } from './ui/console.js';
 import { renderToolbar } from './ui/toolbar.js';
-import * as edges from './edges.js';
+import errorHandler from './ui/error-handler.js';
 
 document.addEventListener('DOMContentLoaded', init);
 
@@ -99,9 +102,12 @@ function setupPanZoom() {
   ws.addEventListener('wheel', (ev) => {
     if (!ev.ctrlKey) return;          // solo con CTRL
     ev.preventDefault();
+    ev.stopPropagation();
+    
     const dir = ev.deltaY < 0 ? 1.1 : 0.9;
-    setZoom(clamp(zoom * dir, 0.5, 2));
-  }, { passive:false });
+    const newZoom = clamp(zoom * dir, 0.5, 2);
+    setZoom(newZoom);
+  }, { passive: false });
 
   // Pan con SPACE + arrastrar
   window.addEventListener('keydown', (e) => { if (e.code === 'Space') isSpacePanning = true; }, { passive:true });
@@ -383,10 +389,46 @@ function exportJSON() {
 
 function importJSON(text) {
   try {
-    const json = JSON.parse(text);
-    loadFlowJSON(json);
-    uiConsole?.log('Flujo importado.');
+    // Validar que el texto no esté vacío
+    if (!text || typeof text !== 'string' || text.trim() === '') {
+      throw new Error('Archivo JSON vacío o inválido');
+    }
+    
+    // Intentar parsear el JSON
+    let json;
+    try {
+      json = JSON.parse(text);
+    } catch (parseError) {
+      throw new Error(`JSON mal formateado: ${parseError.message}`);
+    }
+    
+    // Validar estructura básica
+    if (!json || typeof json !== 'object') {
+      throw new Error('El archivo no contiene un objeto JSON válido');
+    }
+    
+    if (!Array.isArray(json.steps)) {
+      throw new Error('El flujo no contiene una lista de pasos válida');
+    }
+    
+    const loadingId = toast.loading('Importando flujo...', 'Cargando nodos y conexiones');
+    
+    setTimeout(() => {
+      try {
+        loadFlowJSON(json);
+        toast.hide(loadingId);
+        
+        // El mensaje de éxito ya se maneja en loadFlowJSON
+        uiConsole?.log('Flujo importado.');
+      } catch (loadError) {
+        toast.hide(loadingId);
+        toast.error('Error al cargar flujo', loadError.message);
+        uiConsole?.err('Error al cargar flujo: ' + loadError.message);
+      }
+    }, 200);
+    
   } catch (e) {
+    toast.error('JSON inválido', 'El archivo no tiene un formato válido');
     uiConsole?.err('JSON inválido: ' + e.message);
   }
 }
@@ -405,6 +447,10 @@ function clearCanvas(ask = true) {
   edges.renderEdges();
   updateCanvasHint();
   renderPropsPanel(null, null);
+  
+  if (!ask) {
+    toast.info('Lienzo limpiado', 'Preparando para nuevo flujo...');
+  }
 }
 
 /* =========================
@@ -412,19 +458,31 @@ function clearCanvas(ask = true) {
    ========================= */
 async function runFlow() {
   const flow = buildFlowJSON();
+  const runId = toast.loading('Ejecutando flujo...', 'Iniciando procesamiento');
   uiConsole?.log('Iniciando ejecución...');
 
   try {
     if (window.eel && typeof window.eel.run_flow === 'function') {
       const res = await window.eel.run_flow(flow)();  // Python debe exponer run_flow
-      if (res?.ok) uiConsole?.ok('Ejecución completada.');
-      else uiConsole?.err(res?.error || 'Fallo en ejecución.');
+      toast.hide(runId);
+      
+      if (res?.ok) {
+        toast.success('🎉 Ejecución completada', 'El flujo se ejecutó correctamente');
+        uiConsole?.ok('Ejecución completada.');
+      } else {
+        toast.error('Error en ejecución', res?.error || 'Fallo en ejecución');
+        uiConsole?.err(res?.error || 'Fallo en ejecución.');
+      }
     } else {
       // Modo demo sin backend
       await fakeRun(flow);
+      toast.hide(runId);
+      toast.success('🧪 Simulación completada', 'Ejecución simulada sin errores');
       uiConsole?.ok('Ejecución simulada completa.');
     }
   } catch (e) {
+    toast.hide(runId);
+    toast.error('Error crítico', e?.message || e);
     uiConsole?.err(e?.message || e);
   }
 }
@@ -466,6 +524,7 @@ function buildFlowJSON() {
     steps: state.steps.map(s => ({
       id: s.id,
       typeId: s.typeId,
+      type: s.typeId,  // Agregar propiedad 'type' que espera el backend
       nombre: s.label,
       position: { x: Math.round(s.x), y: Math.round(s.y) },
       props: s.props || {},
@@ -475,37 +534,97 @@ function buildFlowJSON() {
 }
 
 function loadFlowJSON(data) {
-  clearCanvas(false);
+  try {
+    clearCanvas(false);
 
-  const steps = Array.isArray(data?.steps) ? data.steps : [];
-  steps.forEach(s => {
-    const def = registry.getDefById(s.typeId);
-    if (!def) return;
-    const step = {
-      id: s.id,
-      typeId: s.typeId,
-      label: s.nombre || def.nombre || s.typeId,
-      x: s.position?.x ?? 40,
-      y: s.position?.y ?? 40,
-      props: { ...defaultProps(def.schema), ...(s.props || {}) },
-    };
-    state.steps.push(step);
-    mountNode(step, def);
-  });
+    const steps = Array.isArray(data?.steps) ? data.steps : [];
+    let validSteps = 0;
+    let invalidSteps = 0;
+    
+    steps.forEach((s, index) => {
+      // Validación mejorada del paso
+      if (!s || typeof s !== 'object') {
+        const error = `Paso inválido en posición ${index}: no es un objeto válido`;
+        console.warn(error);
+        errorHandler.reportWarning(error, { stepIndex: index, step: s });
+        invalidSteps++;
+        return;
+      }
+      
+      // Manejar compatibilidad: typeId o type
+      let typeId = s.typeId || s.type;
+      if (!typeId || typeof typeId !== 'string') {
+        const error = `Paso inválido en posición ${index}: typeId/type faltante o inválido (typeId: ${s.typeId}, type: ${s.type})`;
+        console.warn(error);
+        errorHandler.reportWarning(error, { stepIndex: index, stepId: s.id, typeId: s.typeId, type: s.type });
+        invalidSteps++;
+        return;
+      }
+      
+      const def = registry.getDefById(typeId);
+      if (!def) {
+        const error = `Definición no encontrada para typeId: ${typeId}`;
+        console.warn(error);
+        errorHandler.reportWarning(error, { stepId: s.id, typeId: typeId });
+        invalidSteps++;
+        return;
+      }
+      
+      const step = {
+        id: s.id,
+        typeId: typeId,
+        label: s.nombre || def.nombre || s.typeId,
+        x: s.position?.x ?? (100 + (validSteps * 200)),
+        y: s.position?.y ?? (100 + (validSteps * 80)),
+        props: { ...defaultProps(def.schema), ...(s.props || {}) },
+      };
+      state.steps.push(step);
+      mountNode(step, def);
+      validSteps++;
+    });
 
-  const edgesIn = Array.isArray(data?.edges) ? data.edges : [];
-  state.edges = edgesIn
-    .filter(e => e && e.from && e.to)
-    .map(e => ({ from: { step: e.from, port: 'out' }, to: { step: e.to, port: 'in' } }));
+    // Reportar estadísticas de importación
+    const totalSteps = validSteps + invalidSteps;
+    if (totalSteps > 0) {
+      const message = `Flujo importado: ${validSteps} pasos válidos, ${invalidSteps} pasos inválidos de ${totalSteps} total`;
+      console.log(message);
+      
+      if (invalidSteps > 0) {
+        toast.warning('Flujo con errores', `⚠️ ${invalidSteps} pasos no pudieron cargarse`);
+      } else {
+        toast.success('Flujo importado', `✅ ${validSteps} pasos cargados correctamente`);
+      }
+    }
 
-  updateCanvasSize();
-  edges.renderEdges();
-  updateCanvasHint();
-  state.selectedId = null;
-  renderPropsPanel(null, null);
+    const edgesIn = Array.isArray(data?.edges) ? data.edges : [];
+    state.edges = edgesIn
+      .filter(e => e && e.from && e.to)
+      .map(e => ({ from: { step: e.from, port: 'out' }, to: { step: e.to, port: 'in' } }));
 
-  // centrar en el primer nodo cargado
-  if (state.steps.length) centerOnStep(state.steps[0].id, true);
+    updateCanvasSize();
+    edges.renderEdges();
+    canvas.updateHint();
+    updateCanvasHint();
+    state.selectedId = null;
+    renderPropsPanel(null, null);
+
+    // Forzar actualización visual y centrar
+    setTimeout(() => {
+      updateCanvasSize();
+      edges.renderEdges();
+      if (state.steps.length) {
+        centerOnStep(state.steps[0].id, true);
+        uiConsole?.ok(`✅ Flujo cargado: ${state.steps.length} nodos, ${state.edges.length} conexiones`);
+      }
+    }, 100);
+    
+  } catch (error) {
+    const errorMsg = `Error al cargar flujo: ${error.message}`;
+    console.error(errorMsg, error);
+    errorHandler.reportError(error, { action: 'loadFlowJSON', data: data });
+    toast.error('Error al cargar flujo', error.message);
+    throw error;
+  }
 }
 
 /* =========================
@@ -576,7 +695,35 @@ function centerOnStep(stepId, smooth = true) {
   const left = Math.max(0, cx - viewW / 2);
   const top  = Math.max(0, cy - viewH / 2);
 
-  ws.scrollTo({ left, top, behavior: smooth ? 'smooth' : 'auto' });
+  if (smooth) {
+    // Animación suave personalizada
+    const startLeft = ws.scrollLeft;
+    const startTop = ws.scrollTop;
+    const deltaLeft = left - startLeft;
+    const deltaTop = top - startTop;
+    
+    const duration = 400; // ms
+    const startTime = performance.now();
+    
+    function animate(currentTime) {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      // Función de easing suave (ease-out)
+      const eased = 1 - Math.pow(1 - progress, 3);
+      
+      ws.scrollLeft = startLeft + deltaLeft * eased;
+      ws.scrollTop = startTop + deltaTop * eased;
+      
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    }
+    
+    requestAnimationFrame(animate);
+  } else {
+    ws.scrollTo({ left, top, behavior: 'auto' });
+  }
 }
 
 /* Simulador si no hay backend */

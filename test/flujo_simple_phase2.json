@@ -1,0 +1,90 @@
+{
+  "name": "Flujo Simple - Test Básico",
+  "description": "Flujo simple para probar las nuevas acciones de Phase 2",
+  "version": "1.0",
+  "created": "2025-09-06",
+  "steps": [
+    {
+      "id": "inicio_1",
+      "type": "variable_set",
+      "props": {
+        "variable": "contador",
+        "valor": "0"
+      },
+      "position": { "x": 100, "y": 100 }
+    },
+    {
+      "id": "crear_lista",
+      "type": "variable_set", 
+      "props": {
+        "variable": "numeros",
+        "valor": "[10, 20, 30, 40, 50]"
+      },
+      "position": { "x": 100, "y": 200 }
+    },
+    {
+      "id": "bucle_simple",
+      "type": "variable_set",
+      "props": {
+        "variable": "valor_evaluacion",
+        "valor": "3"
+      },
+      "position": { "x": 100, "y": 300 }
+    },
+    {
+      "id": "delay_test",
+      "type": "delay_dinamico",
+      "props": {
+        "tipo_delay": "fijo",
+        "valor_base": "0.1"
+      },
+      "position": { "x": 100, "y": 400 }
+    },
+    {
+      "id": "switch_test",
+      "type": "condicional_multiple",
+      "props": {
+        "variable_evaluacion": "valor_evaluacion",
+        "casos": "{\"1\": \"primero\", \"5\": \"ultimo\", \"default\": \"intermedio\"}",
+        "comparacion_estricta": "false",
+        "resultado_variable": "posicion"
+      },
+      "position": { "x": 100, "y": 500 }
+    },
+    {
+      "id": "mostrar_resultado",
+      "type": "variable_get",
+      "props": {
+        "variable": "posicion"
+      },
+      "position": { "x": 100, "y": 600 }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge_1",
+      "source": "inicio_1",
+      "target": "crear_lista"
+    },
+    {
+      "id": "edge_2", 
+      "source": "crear_lista",
+      "target": "bucle_simple"
+    },
+    {
+      "id": "edge_3",
+      "source": "bucle_simple", 
+      "target": "delay_test"
+    },
+    {
+      "id": "edge_4",
+      "source": "delay_test",
+      "target": "switch_test"
+    },
+    {
+      "id": "edge_5",
+      "source": "switch_test",
+      "target": "mostrar_resultado"
+    }
+  ]
+}

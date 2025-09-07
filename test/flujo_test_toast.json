@@ -1,0 +1,31 @@
+{
+  "name": "Test Simple - Notificaciones Toast",
+  "description": "Flujo simple para probar el sistema de notificaciones",
+  "version": "2.1",
+  "created": "2025-09-06",
+  "steps": [
+    {
+      "id": "inicio",
+      "typeId": "variable_set",
+      "nombre": "Configurar Variable",
+      "props": {
+        "nombre": "mensaje",
+        "valor": "¡Hola FlowRunner!"
+      },
+      "position": { "x": 100, "y": 100 }
+    },
+    {
+      "id": "mostrar",
+      "typeId": "variables_listar",
+      "nombre": "Mostrar Variables",
+      "props": {},
+      "position": { "x": 300, "y": 100 }
+    }
+  ],
+  "edges": [
+    {
+      "from": "inicio",
+      "to": "mostrar"
+    }
+  ]
+}

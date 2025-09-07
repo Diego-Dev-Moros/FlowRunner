@@ -18,6 +18,11 @@ export const CAT_TITLES = {
   escritura: '💾 Guardar Información', 
   archivos: '📁 Gestión de Archivos',
   datos: '📊 Procesar Datos',
+  procesamiento: '🧮 Procesamiento Avanzado',
+  
+  // Control de flujo
+  logica: '🔄 Control y Decisiones',
+  control: '🎮 Control de Flujo Avanzado',
   
   // Interacción y sistema
   dialogos: '💬 Preguntar al Usuario',
@@ -27,7 +32,7 @@ export const CAT_TITLES = {
 
 // Orden de visualización optimizado para flujo de trabajo lógico
 export const CATEGORY_ORDER = [
-  'inicio', 'navegacion', 'lectura', 'datos', 
-  'logica', 'escritura', 'archivos', 
+  'inicio', 'navegacion', 'lectura', 'datos', 'procesamiento',
+  'logica', 'control', 'escritura', 'archivos', 
   'dialogos', 'sistema', 'utilidades', 'finalizacion'
 ];

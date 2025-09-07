@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { createNode, selectNode } from './nodes.js';
-import { redrawEdges } from './edges.js';
+import { renderEdges } from './edges.js';
 import { AUTOCONNECT_NEW_NODES } from './config.js';
 
 let registryRef;
@@ -24,7 +24,7 @@ export function initCanvas(registry) {
 
     const step = state.addStep(def, pos);
     createNode(step, {
-      onMove: redrawEdges,
+      onMove: renderEdges,
       onRemove: handleRemove,
       getDef: (id) => registryRef.byId.get(id)
     });
@@ -36,14 +36,14 @@ export function initCanvas(registry) {
     }
     state.lastStepId = step.id;
 
-    redrawEdges();
+    renderEdges();
     updateHint();
   });
 
   window.addEventListener('resize', () => {
     svg.setAttribute('width', lienzo.clientWidth);
     svg.setAttribute('height', lienzo.clientHeight);
-    redrawEdges();
+    renderEdges();
   });
 
   updateHint();
@@ -58,6 +58,6 @@ export function updateHint(){
 
 function handleRemove(stepId) {
   state.removeStep(stepId);
-  redrawEdges();
+  renderEdges();
   updateHint();
 }

@@ -33,3 +33,11 @@ export function listByCategory() {
 export function getDefById(id) {
   return (FUNCTION_CATALOG.find(d => d.id === id) || null);
 }
+
+// Objeto registry para compatibilidad con main.js
+export const registry = {
+  byId: new Map(FUNCTION_CATALOG.map(def => [def.id, def])),
+  listEnabled,
+  listByCategory,
+  getDefById
+};

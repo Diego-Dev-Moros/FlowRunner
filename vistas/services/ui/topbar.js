@@ -1,3 +1,5 @@
+import toast from './toast.js';
+
 export function setupTopbar({ onExport, onImport, onClear }) {
   const root = document.getElementById('topbar');
   if (!root) return;
@@ -23,15 +25,41 @@ export function setupTopbar({ onExport, onImport, onClear }) {
   file.style.display = 'none';
   root.appendChild(file);
 
-  root.querySelector('#btnImport').addEventListener('click', () => file.click());
-  root.querySelector('#btnExport').addEventListener('click', () => onExport?.());
-  root.querySelector('#btnClearAll').addEventListener('click', () => onClear?.());
+  root.querySelector('#btnImport').addEventListener('click', () => {
+    toast.info('📂 Seleccionar archivo', 'Elige un archivo JSON para importar');
+    file.click();
+  });
+  
+  root.querySelector('#btnExport').addEventListener('click', () => {
+    const exportingId = toast.loading('📤 Exportando...', 'Generando archivo JSON');
+    setTimeout(() => {
+      onExport?.();
+      toast.hide(exportingId);
+      toast.success('✅ Flujo exportado', 'Archivo JSON descargado correctamente');
+    }, 300);
+  });
+  
+  root.querySelector('#btnClearAll').addEventListener('click', () => {
+    toast.warning('🧹 Limpiar lienzo', '¿Estás seguro? Se perderán todos los nodos', {
+      duration: 0,
+      action: () => {
+        onClear?.();
+        toast.hideAll();
+      }
+    });
+  });
 
   file.addEventListener('change', async () => {
     const f = file.files?.[0];
     if (!f) return;
-    const text = await f.text();
-    onImport?.(text);
+    
+    try {
+      const text = await f.text();
+      onImport?.(text);
+    } catch (error) {
+      toast.error('Error al leer archivo', 'No se pudo procesar el archivo seleccionado');
+    }
+    
     file.value = '';
   });
 }

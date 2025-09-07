@@ -22,6 +22,10 @@ def pausa(context: FlowContext, segundos: float = 1.0) -> Dict[str, Any]:
     Pausa la ejecución por el número de segundos especificado.
     """
     try:
+        # Convertir a float si es string
+        if isinstance(segundos, str):
+            segundos = float(segundos)
+            
         if segundos <= 0:
             return error_result("Los segundos deben ser mayor que 0")
         
