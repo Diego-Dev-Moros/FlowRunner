@@ -81,18 +81,22 @@ class BrowserConfig:
             'host': host,
             'port': port,
             'block': True,
+            # HOTFIX #4: Flags optimizados para mejor modo app
             'cmdline_args': [
                 f'--app={url}',
-                '--disable-web-security',
-                '--disable-features=VizDisplayCompositor',
                 '--no-first-run',
+                '--no-default-browser-check',
                 '--disable-default-apps',
                 '--disable-extensions',
                 '--disable-plugins',
                 '--disable-translate',
                 '--disable-background-timer-throttling',
+                '--disable-backgrounding-occluded-windows',
                 '--disable-renderer-backgrounding',
-                '--disable-backgrounding-occluded-windows'
+                '--disable-features=VizDisplayCompositor',
+                '--disable-web-security',  # Para desarrollo
+                '--app-auto-launched',      # Comportamiento nativo app
+                '--no-sandbox'              # Para compatibilidad
             ]
         }
     

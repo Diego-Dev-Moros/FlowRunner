@@ -10,19 +10,43 @@ import { setupConsole } from './ui/console.js';
 import { renderToolbar } from './ui/toolbar.js';
 import errorHandler from './ui/error-handler.js';
 
-// Función para determinar la forma del nodo basándose en su tipo
-function getNodeShape(actionId) {
-  if (!actionId) return 'circle';
+// HOTFIX #1: Sistema de formas unificado y moderno
+function applyNodeShape(element, actionId, def) {
+  if (!actionId || !element) return;
   
-  // SOLO Condicionales y bucles específicos - triángulos
-  if (actionId === 'condicional_si' || actionId === 'condicional_multiple' ||
-      actionId === 'bucle_mientras' || actionId === 'bucle_for_lista' ||
-      actionId === 'bucle_for_rango') {
-    return 'triangle';
+  // Limpiar clases anteriores
+  element.classList.remove('node--decision', 'node--loop', 'node--inicio', 'node--cierre');
+  
+  // Sistema de mapeo moderno basado en actionId
+  const SHAPE_MAPPING = {
+    // Decisiones (rombo)
+    'condicional_si': 'node--decision',
+    'condicional_multiple': 'node--decision', 
+    'switch': 'node--decision',
+    'decision': 'node--decision',
+    
+    // Loops (hexágono con marca)
+    'bucle_mientras': 'node--loop',
+    'bucle_for_lista': 'node--loop',
+    'bucle_for_rango': 'node--loop',
+    'repetir_hasta': 'node--loop',
+    
+    // Inicio/Cierre (píldoras)
+    'inicio': 'node--inicio',
+    'fin': 'node--cierre',
+    'start': 'node--inicio',
+    'end': 'node--cierre'
+  };
+  
+  const shapeClass = SHAPE_MAPPING[actionId];
+  if (shapeClass) {
+    element.classList.add(shapeClass);
+    element.dataset.nodeShape = shapeClass.replace('node--', '');
   }
   
-  // TODOS los demás nodos (incluyendo pausa, ordenar, leer, etc.) - círculo normal
-  return 'circle';
+  // Data attributes para CSS targeting
+  element.dataset.typeId = actionId;
+  element.dataset.categoria = def?.categoria || 'proceso';
 }
 
 document.addEventListener('DOMContentLoaded', init);
@@ -32,6 +56,26 @@ let zoom = 1;                 // 0.5 .. 2
 let isSpacePanning = false;
 let panStart = null;
 const AUTO_CENTER_ON_SELECT = true; // centra al seleccionar
+
+// HOTFIX #1: Performance - RequestAnimationFrame scheduler
+let _rafEdges = null;
+let _rafCanvasSize = null;
+
+function scheduleEdges() {
+  if (_rafEdges) return;
+  _rafEdges = requestAnimationFrame(() => {
+    _rafEdges = null;
+    edges.renderEdges();
+  });
+}
+
+function scheduleCanvasSize() {
+  if (_rafCanvasSize) return;
+  _rafCanvasSize = requestAnimationFrame(() => {
+    _rafCanvasSize = null;
+    updateCanvasSize();
+  });
+}
 
 async function init() {
   // Topbar
@@ -57,13 +101,13 @@ async function init() {
   // Pan / Zoom
   setupPanZoom();
 
-  // Redibujar edges en scroll/resize
+  // Redibujar edges en scroll/resize - HOTFIX: usando scheduler
   const ws = getWorkspace();
-  ws.addEventListener('scroll', edges.renderEdges);
+  ws.addEventListener('scroll', scheduleEdges, { passive: true });
   window.addEventListener('resize', () => {
-    updateCanvasSize();        // por si cambia tamaño visible
-    edges.renderEdges();
-  });
+    scheduleCanvasSize();        // por si cambia tamaño visible
+    scheduleEdges();
+  }, { passive: true });
 
   // Si Python/Eel manda notificaciones de progreso
   if (window.eel && typeof window.eel.expose === 'function') {
@@ -79,7 +123,7 @@ async function init() {
 
   updateCanvasHint();
   updateCanvasSize();
-  edges.renderEdges();
+  scheduleEdges();
 }
 
 /* =========================
@@ -150,13 +194,14 @@ function setupPanZoom() {
     window.removeEventListener('mouseup', onPanUp);
   }
 
-  // aplica zoom a ambas capas (mismo origen para que cuadre con scroll)
+  // aplica zoom a ambas capas (mismo origen para que cuadre con scroll) - HOTFIX: transform-origin 0 0
   function setZoom(z) {
     zoom = z;
     lienzo.style.transform = `scale(${zoom})`;
     lienzo.style.transformOrigin = '0 0';
     svg.style.transform    = `scale(${zoom})`;
     svg.style.transformOrigin = '0 0';
+    scheduleEdges(); // HOTFIX: usar scheduler
   }
 
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
@@ -188,8 +233,8 @@ function createNode(def, x = 80, y = 80) {
   }
   state.__lastCreated = step.id;
 
-  updateCanvasSize();
-  edges.renderEdges();
+  scheduleCanvasSize(); // HOTFIX: usar scheduler
+  scheduleEdges();      // HOTFIX: usar scheduler
   updateCanvasHint();
 
   // centrar en el nodo recién creado
@@ -203,13 +248,9 @@ function mountNode(step, def) {
   el.style.left = `${step.pos.x}px`;
   el.style.top  = `${step.pos.y}px`;
 
-  // Determinar forma del nodo basado en el ID
-  const actionId = step.typeId || def.id;
-  const nodeShape = getNodeShape(actionId);
-  
-  if (nodeShape !== 'circle') {
-    el.classList.add(`shape-${nodeShape}`);
-  }
+  // HOTFIX #1: Aplicar sistema de formas unificado
+  const actionId = step.typeId || def?.id || '';
+  applyNodeShape(el, actionId, def);
 
   // Header
   const header = document.createElement('div');
@@ -312,7 +353,7 @@ function enableDrag(el, step) {
   const onMouseMove = (e) => {
     if (!dragging) return;
     
-    // Cancelar frame anterior si existe
+    // Cancelar frame anterior si existe - HOTFIX: mejorado
     if (animationId) {
       cancelAnimationFrame(animationId);
     }
@@ -326,7 +367,8 @@ function enableDrag(el, step) {
       el.style.left = `${step.pos.x}px`;
       el.style.top  = `${step.pos.y}px`;
       
-      // Solo actualizar edges al final del movimiento para mejor performance
+      // HOTFIX: usar scheduler para edges durante drag
+      scheduleEdges();
       animationId = null;
     });
   };
@@ -336,6 +378,12 @@ function enableDrag(el, step) {
     dragging = false;
     document.body.style.userSelect = '';
     window.removeEventListener('mousemove', onMouseMove);
+    window.removeEventListener('mouseup', onMouseUp);
+    
+    // HOTFIX: actualización final completa después del drag
+    updateCanvasSize();
+    scheduleEdges();
+  };
     window.removeEventListener('mouseup', onMouseUp);
     
     // Cancelar cualquier animación pendiente
@@ -348,10 +396,13 @@ function enableDrag(el, step) {
     updateCanvasSize();
     edges.renderEdges();
 
-    if (AUTO_CENTER_ON_SELECT) centerOnStep(step.id, true);
+    // HOTFIX: actualización final completa después del drag
+    updateCanvasSize();
+    scheduleEdges();
   };
 
   header.addEventListener('mousedown', (e) => {
+    if (e.target.tagName === 'BUTTON') return;
     e.preventDefault();
     dragging = true;
     sx = e.clientX; sy = e.clientY;
@@ -403,7 +454,7 @@ function deleteStep(stepId) {
   }
 
   updateCanvasSize();
-  edges.renderEdges();
+  scheduleEdges();
   updateCanvasHint();
 
   // centra en el primero si quedó alguno
@@ -414,7 +465,7 @@ function addEdge(fromStepId, toStepId) {
   if (fromStepId === toStepId) return;
   if (state.edges.some(e => e.from.step === fromStepId && e.to.step === toStepId)) return;
   state.edges.push({ from: { step: fromStepId, port: 'out' }, to: { step: toStepId, port: 'in' } });
-  edges.renderEdges();
+  scheduleEdges(); // HOTFIX: usar scheduler
 }
 
 /* =========================
@@ -487,8 +538,8 @@ function clearCanvas(ask = true) {
   state.results = {};
   state.__lastCreated = null;
 
-  updateCanvasSize();
-  edges.renderEdges();
+  scheduleCanvasSize(); // HOTFIX: usar scheduler
+  scheduleEdges();      // HOTFIX: usar scheduler
   updateCanvasHint();
   renderPropsPanel(null, null);
   
@@ -644,8 +695,8 @@ function loadFlowJSON(data) {
       .filter(e => e && e.from && e.to)
       .map(e => ({ from: { step: e.from, port: 'out' }, to: { step: e.to, port: 'in' } }));
 
-    updateCanvasSize();
-    edges.renderEdges();
+    scheduleCanvasSize(); // HOTFIX: usar scheduler
+    scheduleEdges();      // HOTFIX: usar scheduler
     canvas.updateHint();
     updateCanvasHint();
     state.selectedId = null;
@@ -654,7 +705,7 @@ function loadFlowJSON(data) {
     // Forzar actualización visual y centrar
     setTimeout(() => {
       updateCanvasSize();
-      edges.renderEdges();
+      scheduleEdges(); // HOTFIX: usar scheduler
       if (state.steps.length) {
         centerOnStep(state.steps[0].id, true);
         uiConsole?.ok(`✅ Flujo cargado: ${state.steps.length} nodos, ${state.edges.length} conexiones`);

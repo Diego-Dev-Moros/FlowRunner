@@ -112,21 +112,24 @@ if __name__ == '__main__':
     port = 8000
     size = (1280, 800)
 
+    # HOTFIX #4: Recuperar modo app con secuencia optimizada
+    print("[INFO] Iniciando FlowRunner...")
+    
     # Usar el nuevo sistema de configuración de navegador
     browser_config = create_browser_config()
-    
-    print("[INFO] Iniciando FlowRunner...")
     print(f"[INFO] Navegadores detectados: {list(browser_config.detected_browsers.keys())}")
     
     success, mode_used = browser_config.launch_app(page, host, port, size)
     
     if success:
         if mode_used.endswith('-app'):
-            print(f"[SUCCESS] FlowRunner iniciado en modo aplicación: {mode_used}")
+            print(f"[SUCCESS] ✅ FlowRunner iniciado en modo aplicación: {mode_used}")
         elif mode_used in ['chrome', 'edge']:
-            print(f"[SUCCESS] FlowRunner iniciado en modo pestaña: {mode_used}")
+            print(f"[SUCCESS] ✅ FlowRunner iniciado en modo pestaña: {mode_used}")
         elif mode_used == 'server-only':
-            print(f"[SUCCESS] Servidor iniciado. Abrir manualmente: http://{host}:{port}/{page}")
+            print(f"[SUCCESS] ✅ Servidor iniciado. Abrir manualmente: http://{host}:{port}/{page}")
+            print("[INFO] 💡 Tip: Instala Chrome o Edge para modo aplicación automático")
     else:
-        print("[ERROR] No se pudo iniciar FlowRunner")
+        print("[ERROR] ❌ No se pudo iniciar FlowRunner")
+        print("[INFO] Verifica que Chrome/Edge estén instalados o accede manualmente al servidor")
         input("Presiona Enter para salir...")

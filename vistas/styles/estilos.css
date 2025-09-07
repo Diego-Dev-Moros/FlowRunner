@@ -401,9 +401,15 @@ body{
   overflow:auto;               /* <- antes estaba hidden */
 }
 
-/* Capas que se escalan juntas */
+/* Capas que se escalan juntas - HOTFIX: transform-origin optimizado */
 #lienzo, #svgEdges{
   transform-origin: 0 0;       /* <- necesario para zoom */
+}
+
+/* HOTFIX #3: Vector-effect en paths para grosor constante */
+#svgEdges path {
+  vector-effect: non-scaling-stroke;
+  shape-rendering: geometricPrecision;
 }
 
 
@@ -485,3 +491,185 @@ body{
   background: #8f97a6;
 }
 #workspace::-webkit-scrollbar-corner{ background:#eceff3; }
+
+/* ════════════════════════════════════════════════════════════════════════════════
+   HOTFIX #1 MEJORADO: SISTEMA DE FORMAS DE NODOS UNIFICADO Y OPTIMIZADO
+   ════════════════════════════════════════════════════════════════════════════════ */
+
+/* Base para todos los nodos */
+.node {
+  position: absolute !important;
+  overflow: visible !important; /* Permite que las formas se vean completas */
+  transform-origin: center center; /* Para rotaciones futuras */
+}
+
+/* Pseudo-elemento base para formas (detrás del contenido) */
+.node::before {
+  content: "";
+  position: absolute;
+  inset: 4px; /* Margen interno para no cubrir bordes */
+  z-index: -1; /* Detrás del contenido del nodo */
+  background: #fff;
+  border: 1px solid var(--border, #e2e2e2);
+  border-radius: 12px;
+  box-shadow: var(--shadow, 0 2px 8px rgba(0,0,0,.08));
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Transición suave */
+}
+
+/* Contenido del nodo debe estar sobre el pseudo-elemento */
+.node > * {
+  position: relative;
+  z-index: 2; /* Incrementado para estar bien sobre las formas */
+}
+
+/* FORMAS ESPECÍFICAS POR TIPO - SISTEMA UNIFICADO */
+
+/* 1. DECISIONES (ROMBO) - Condicionales */
+.node--decision::before {
+  border-radius: 0;
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  background: linear-gradient(135deg, #fff8f0 0%, #ffefd6 100%);
+  border-color: #f59e0b;
+  border-width: 2px;
+  box-shadow: 
+    0 4px 12px rgba(245, 158, 11, 0.15),
+    0 2px 4px rgba(245, 158, 11, 0.1);
+  animation: decision-pulse 3s ease-in-out infinite;
+}
+
+@keyframes decision-pulse {
+  0%, 100% { box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15), 0 2px 4px rgba(245, 158, 11, 0.1); }
+  50% { box-shadow: 0 6px 20px rgba(245, 158, 11, 0.25), 0 3px 6px rgba(245, 158, 11, 0.15); }
+}
+
+/* 2. LOOPS (HEXÁGONO CON MARCA INTERIOR) */
+.node--loop::before {
+  border-radius: 10px;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border-color: #10b981;
+  border-width: 2px;
+  box-shadow: 
+    inset 0 0 0 4px rgba(16, 185, 129, 0.1),  /* Marca interior distintiva */
+    0 4px 12px rgba(16, 185, 129, 0.15),
+    0 2px 4px rgba(16, 185, 129, 0.1);
+  animation: loop-rotate 6s linear infinite;
+}
+
+@keyframes loop-rotate {
+  0% { box-shadow: inset 0 0 0 4px rgba(16, 185, 129, 0.1), 0 4px 12px rgba(16, 185, 129, 0.15), 0 2px 4px rgba(16, 185, 129, 0.1); }
+  25% { box-shadow: inset 0 0 0 6px rgba(16, 185, 129, 0.15), 0 4px 12px rgba(16, 185, 129, 0.15), 0 2px 4px rgba(16, 185, 129, 0.1); }
+  50% { box-shadow: inset 0 0 0 4px rgba(16, 185, 129, 0.1), 0 4px 12px rgba(16, 185, 129, 0.15), 0 2px 4px rgba(16, 185, 129, 0.1); }
+  75% { box-shadow: inset 0 0 0 6px rgba(16, 185, 129, 0.15), 0 4px 12px rgba(16, 185, 129, 0.15), 0 2px 4px rgba(16, 185, 129, 0.1); }
+  100% { box-shadow: inset 0 0 0 4px rgba(16, 185, 129, 0.1), 0 4px 12px rgba(16, 185, 129, 0.15), 0 2px 4px rgba(16, 185, 129, 0.1); }
+}
+
+/* 3. INICIO/CIERRE (PÍLDORAS) */
+.node--inicio::before,
+.node--cierre::before {
+  border-radius: 999px; /* Forma de píldora/oval */
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-color: #3b82f6;
+  border-width: 2px;
+  box-shadow: 
+    0 4px 12px rgba(59, 130, 246, 0.15),
+    0 2px 4px rgba(59, 130, 246, 0.1);
+}
+
+.node--inicio::before {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border-color: #22c55e;
+  box-shadow: 
+    0 4px 12px rgba(34, 197, 94, 0.15),
+    0 2px 4px rgba(34, 197, 94, 0.1);
+}
+
+.node--cierre::before {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border-color: #ef4444;
+  box-shadow: 
+    0 4px 12px rgba(239, 68, 68, 0.15),
+    0 2px 4px rgba(239, 68, 68, 0.1);
+}
+
+/* Estados hover mejorados para nodos con formas */
+.node--decision:hover::before {
+  transform: scale(1.05) rotate(1deg);
+  box-shadow: 
+    0 8px 25px rgba(245, 158, 11, 0.25),
+    0 4px 8px rgba(245, 158, 11, 0.15);
+}
+
+.node--loop:hover::before {
+  transform: scale(1.03);
+  box-shadow: 
+    inset 0 0 0 6px rgba(16, 185, 129, 0.2),
+    0 8px 25px rgba(16, 185, 129, 0.25),
+    0 4px 8px rgba(16, 185, 129, 0.15);
+}
+
+.node--inicio:hover::before,
+.node--cierre:hover::before {
+  transform: scale(1.03);
+  box-shadow: 
+    0 8px 25px rgba(59, 130, 246, 0.25),
+    0 4px 8px rgba(59, 130, 246, 0.15);
+}
+
+/* Nodo seleccionado - resaltar forma */
+.node.selected::before {
+  border-width: 3px;
+  box-shadow: 
+    0 0 0 3px rgba(255, 102, 0, 0.3), 
+    var(--shadow, 0 2px 8px rgba(0,0,0,.08));
+  animation: selected-glow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes selected-glow {
+  0% { box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.3), var(--shadow, 0 2px 8px rgba(0,0,0,.08)); }
+  100% { box-shadow: 0 0 0 5px rgba(255, 102, 0, 0.4), 0 4px 16px rgba(255, 102, 0, 0.2); }
+}
+
+/* Asegurar que el contenido del nodo sea visible sobre las formas */
+.node-header,
+.node-body {
+  position: relative;
+  z-index: 3;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  margin: 8px;
+  padding: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(8px); /* Efecto de cristal */
+}
+
+/* Ajuste específico para puertos (sin background que interfiera) */
+.node .ports {
+  background: transparent;
+  box-shadow: none;
+  margin: 4px 8px;
+  padding: 4px;
+  z-index: 3;
+}
+
+/* Indicador visual para tipo de nodo */
+.node[data-node-shape]::after {
+  content: attr(data-node-shape);
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: #6b7280;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 2px 6px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.node:hover[data-node-shape]::after {
+  opacity: 1;
+}

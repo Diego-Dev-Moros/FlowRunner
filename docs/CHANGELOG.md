@@ -5,6 +5,52 @@ Este archivo sigue el formato de **[Keep a Changelog](https://keepachangelog.com
 
 ## [Unreleased] - 2025-09-07
 
+### CRITICAL HOTFIX PACK - Auditoría Técnica Completa
+*Commit: Sistema optimizado tras auditoría técnica senior completa*
+
+#### Fixed - Issues Críticos Resueltos
+- **HOTFIX #1: Sistema de Formas Unificado**:
+  - **Eliminado código obsoleto**: `getNodeShape()` reemplazado por `applyNodeShape()` moderno
+  - **Mapeo unificado**: Sistema único de formas con SHAPE_MAPPING centralizado
+  - **CSS avanzado**: Animaciones suaves, transiciones cúbicas, efectos de cristal
+  - **Data attributes**: `data-node-shape` para debugging y CSS targeting
+  - **Formas específicas**: Rombo para decisiones, hexágono para loops, píldoras para inicio/cierre
+
+- **HOTFIX #2: Edge Rendering Optimizado**:
+  - **getBox() mejorado**: Caché de hostRect para evitar reflow redundante
+  - **Verificación robusta**: offsetParent validation con fallback inteligente
+  - **Performance**: Anchor points optimizados con halfW/halfH
+  - **Caching**: hostRectCache con TTL de 16ms para smooth rendering
+
+- **HOTFIX #3: Conflicto Node Creation Detectado**:
+  - **Issue identificado**: Dual system main.js vs nodes.js
+  - **Solución temporal**: main.js como autoridad única
+  - **Planificación**: Consolidación programada para próximo sprint
+
+#### Enhanced - Optimizaciones de Performance
+- **Animation Performance**: Transiciones CSS optimizadas con cubic-bezier
+- **Render Batching**: RequestAnimationFrame scheduler completamente implementado
+- **Memory Management**: Cleanup de event listeners y cache inteligente
+- **Visual Feedback**: Animaciones de hover, selected states, y shape recognition
+
+#### Added - Sistema de Testing Automatizado
+- **Test Suite Completa**: `test_hotfix_performance.js` con 4 test categories
+- **Performance Metrics**: FPS measurement, render call counting, drag smoothness
+- **Visual Validation**: Shape recognition, edge stability, zoom consistency
+- **Automated Reports**: Console output con pass/fail status y métricas
+
+#### Technical Improvements
+- **CSS Architecture**: Sistema de formas con pseudo-elementos optimizado
+- **Edge Stability**: Vector-effect non-scaling-stroke + transform-origin 0 0
+- **Error Handling**: Robust fallbacks en getBox() y shape application
+- **Code Quality**: Eliminación de duplicación y conflictos de sistemas
+
+#### Documentation
+- **Auditoría Completa**: `AUDITORIA_TECNICA_COMPLETA.md` con assessment detallado
+- **Testing Guide**: Instrucciones para ejecutar test suite automatizado
+- **Performance Targets**: Métricas específicas post-hotfix definidas
+- **Roadmap Técnico**: Plan de consolidación por fases documentado
+
 ### NODE SHAPE SYSTEM & PERFORMANCE OPTIMIZATION
 *Commit: Sistema de formas de nodos optimizado con clasificación visual inteligente*
 

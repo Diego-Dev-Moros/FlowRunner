@@ -17,6 +17,8 @@ function ensureLayer() {
     svg.style.inset = '0';
     svg.style.pointerEvents = 'none';
     svg.style.zIndex = '0';
+    // HOTFIX #3: Transform origin para zoom correcto
+    svg.style.transformOrigin = '0 0';
 
     const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
     const marker = document.createElementNS('http://www.w3.org/2000/svg','marker');
@@ -49,20 +51,54 @@ function findNodeEl(stepId) {
 function getBox(stepId) {
   const el = findNodeEl(stepId);
   if (!el) return null;
-  const rect = el.getBoundingClientRect();
+  
+  // HOTFIX #2: Optimización robusta - priorizar offset cuando sea confiable
   const host = hostLayer();
-  const hostRect = host.getBoundingClientRect();
-  const x = rect.left - hostRect.left + host.scrollLeft;
-  const y = rect.top  - hostRect.top  + host.scrollTop;
-  const w = rect.width, h = rect.height;
+  let x, y, w, h;
+  
+  // Verificación más robusta de offsetParent
+  const hasValidOffset = el.offsetParent !== null && 
+                        el.offsetLeft !== 0 || el.offsetTop !== 0 || 
+                        el.offsetWidth > 0 && el.offsetHeight > 0;
+  
+  if (hasValidOffset && host === el.offsetParent) {
+    // Método optimizado: usar offset directo (sin reflow)
+    x = el.offsetLeft;
+    y = el.offsetTop;
+    w = el.offsetWidth;
+    h = el.offsetHeight;
+  } else {
+    // Fallback: getBoundingClientRect con caché de hostRect
+    if (!getBox._hostRectCache || performance.now() - getBox._hostRectTime > 16) {
+      getBox._hostRectCache = host.getBoundingClientRect();
+      getBox._hostRectTime = performance.now();
+    }
+    
+    const rect = el.getBoundingClientRect();
+    const hostRect = getBox._hostRectCache;
+    
+    x = rect.left - hostRect.left + host.scrollLeft;
+    y = rect.top - hostRect.top + host.scrollTop;
+    w = rect.width;
+    h = rect.height;
+  }
+  
+  // Cálculo optimizado de anchor points
+  const halfW = w * 0.5;
+  const halfH = h * 0.5;
+  
   return {
     x, y, w, h,
-    left:  { x,       y: y + h/2 },
-    right: { x: x+w,  y: y + h/2 },
-    top:   { x: x+w/2,y },
-    bottom:{ x: x+w/2,y: y + h }
+    left:  { x, y: y + halfH },
+    right: { x: x + w, y: y + halfH },
+    top:   { x: x + halfW, y },
+    bottom:{ x: x + halfW, y: y + h }
   };
 }
+
+// Cache estático para optimización
+getBox._hostRectCache = null;
+getBox._hostRectTime = 0;
 
 function pathLR(a, b) {
   const dx = b.right.x - a.right.x;
@@ -107,6 +143,9 @@ export function renderEdges() {
     halo.setAttribute('stroke','rgba(255,102,0,.12)');
     halo.setAttribute('stroke-width','10');
     halo.setAttribute('stroke-linecap','round');
+    // HOTFIX #3: Vector-effect para grosor constante en zoom
+    halo.setAttribute('vector-effect','non-scaling-stroke');
+    halo.setAttribute('shape-rendering','geometricPrecision');
     g.appendChild(halo);
 
     const p = document.createElementNS('http://www.w3.org/2000/svg','path');
@@ -116,6 +155,9 @@ export function renderEdges() {
     p.setAttribute('stroke-width','2.5');
     p.setAttribute('stroke-linecap','round');
     p.setAttribute('marker-end','url(#arrowhead)');
+    // HOTFIX #3: Vector-effect para grosor constante en zoom
+    p.setAttribute('vector-effect','non-scaling-stroke');
+    p.setAttribute('shape-rendering','geometricPrecision');
     g.appendChild(p);
   });
 }
