@@ -21,7 +21,7 @@ const AUTO_CENTER_ON_SELECT = true; // centra al seleccionar
 async function init() {
   // Topbar
   setupTopbar({
-    onExport: () => exportJSON(),
+    onExport: (nombrePersonalizado) => exportJSON(nombrePersonalizado),
     onImport: (text) => importJSON(text),
     onClear:  () => clearCanvas(true),
   });
@@ -377,12 +377,13 @@ function addEdge(fromStepId, toStepId) {
 /* =========================
    Topbar: Import / Export / Clear
    ========================= */
-function exportJSON() {
+function exportJSON(nombrePersonalizado = 'flujo') {
   const data = buildFlowJSON();
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url  = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url; a.download = 'flujo.json';
+  a.href = url; 
+  a.download = `${nombrePersonalizado}.json`;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -448,9 +449,7 @@ function clearCanvas(ask = true) {
   updateCanvasHint();
   renderPropsPanel(null, null);
   
-  if (!ask) {
-    toast.info('Lienzo limpiado', 'Preparando para nuevo flujo...');
-  }
+  // Toast info de limpieza eliminado
 }
 
 /* =========================
@@ -467,7 +466,7 @@ async function runFlow() {
       toast.hide(runId);
       
       if (res?.ok) {
-        toast.success('🎉 Ejecución completada', 'El flujo se ejecutó correctamente');
+        // Success toast eliminado - solo mostrar en consola
         uiConsole?.ok('Ejecución completada.');
       } else {
         toast.error('Error en ejecución', res?.error || 'Fallo en ejecución');
@@ -477,7 +476,7 @@ async function runFlow() {
       // Modo demo sin backend
       await fakeRun(flow);
       toast.hide(runId);
-      toast.success('🧪 Simulación completada', 'Ejecución simulada sin errores');
+      // Success toast eliminado - solo mostrar en consola
       uiConsole?.ok('Ejecución simulada completa.');
     }
   } catch (e) {
@@ -591,9 +590,8 @@ function loadFlowJSON(data) {
       
       if (invalidSteps > 0) {
         toast.warning('Flujo con errores', `⚠️ ${invalidSteps} pasos no pudieron cargarse`);
-      } else {
-        toast.success('Flujo importado', `✅ ${validSteps} pasos cargados correctamente`);
       }
+      // Success toast para importación eliminado
     }
 
     const edgesIn = Array.isArray(data?.edges) ? data.edges : [];

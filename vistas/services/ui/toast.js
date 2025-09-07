@@ -24,12 +24,12 @@ class ToastManager {
       style.textContent = `
         .toast-container {
           position: fixed;
-          top: 20px;
+          bottom: 20px;
           right: 20px;
           z-index: 10000;
           pointer-events: none;
           display: flex;
-          flex-direction: column;
+          flex-direction: column-reverse;
           gap: 8px;
           max-width: 400px;
         }
@@ -42,7 +42,7 @@ class ToastManager {
           box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
           backdrop-filter: blur(10px);
           pointer-events: auto;
-          transform: translateX(400px);
+          transform: translateY(100px) translateX(0);
           opacity: 0;
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           display: flex;
@@ -57,12 +57,12 @@ class ToastManager {
         }
 
         .toast.show {
-          transform: translateX(0);
+          transform: translateY(0) translateX(0);
           opacity: 1;
         }
 
         .toast.hide {
-          transform: translateX(400px);
+          transform: translateY(100px) translateX(0);
           opacity: 0;
         }
 

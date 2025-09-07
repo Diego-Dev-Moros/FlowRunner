@@ -77,7 +77,13 @@ body{
 .tool-item:hover{ border-color:#ddd; box-shadow:0 1px 6px rgba(0,0,0,.06); }
 
 /* Centro */
-#main{ display:flex; flex-direction:column; min-width:0; }
+#main{ 
+  display:flex; 
+  flex-direction:column; 
+  min-width:0; 
+  height: 100%; /* Usa toda la altura disponible del grid */
+  overflow: hidden; /* Evita que el main crezca más allá del grid */
+}
 
 /* Canvas */
 #workspace{
@@ -152,7 +158,10 @@ body{
 #props{
   background:var(--panel);
   border:1px solid var(--border); border-radius:.75rem; padding:1rem;
-  box-shadow:var(--shadow); overflow:auto;
+  box-shadow:var(--shadow); 
+  overflow-y:auto; /* Solo scroll vertical */
+  overflow-x:hidden; /* No scroll horizontal */
+  height: 100%; /* Usa toda la altura disponible del grid */
 }
 #props h3{ margin:6px 0 12px; font-size:16px; }
 .props-group{ margin-bottom:14px; }
@@ -231,8 +240,10 @@ body{
 .layout{
   display:grid;
   grid-template-columns: 280px 1fr 320px;
+  grid-template-rows: 1fr;
   gap:1rem; padding:1rem;
-  min-height:calc(100vh - 64px);
+  height:calc(100vh - 64px); /* Altura fija */
+  overflow: hidden; /* Evita que el layout crezca */
 }
 
 /* Sidebar - Catálogo mejorado */
@@ -240,7 +251,9 @@ body{
   background:var(--panel);
   border:1px solid var(--border); border-radius:.75rem; padding:1rem;
   box-shadow:var(--shadow);
-  overflow:auto;
+  overflow-y:auto; /* Solo scroll vertical */
+  overflow-x:hidden; /* No scroll horizontal */
+  height: 100%; /* Usa toda la altura disponible del grid */
 }
 
 /* Grupos de funciones */

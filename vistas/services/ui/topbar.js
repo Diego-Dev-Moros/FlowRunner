@@ -26,27 +26,29 @@ export function setupTopbar({ onExport, onImport, onClear }) {
   root.appendChild(file);
 
   root.querySelector('#btnImport').addEventListener('click', () => {
-    toast.info('📂 Seleccionar archivo', 'Elige un archivo JSON para importar');
+    // Info toast eliminado - abrir directamente
     file.click();
   });
   
   root.querySelector('#btnExport').addEventListener('click', () => {
-    const exportingId = toast.loading('📤 Exportando...', 'Generando archivo JSON');
+    // Pedir nombre al usuario
+    const nombreFlujo = prompt('Nombre del flujo a exportar:', 'mi_flujo') || 'flujo_sin_nombre';
+    
+    const exportingId = toast.loading('📤 Exportando...', `Generando ${nombreFlujo}.json`);
     setTimeout(() => {
-      onExport?.();
+      onExport?.(nombreFlujo);
       toast.hide(exportingId);
-      toast.success('✅ Flujo exportado', 'Archivo JSON descargado correctamente');
+      // Success toast eliminado para export
     }, 300);
   });
   
   root.querySelector('#btnClearAll').addEventListener('click', () => {
-    toast.warning('🧹 Limpiar lienzo', '¿Estás seguro? Se perderán todos los nodos', {
-      duration: 0,
-      action: () => {
-        onClear?.();
-        toast.hideAll();
-      }
+    // Toast warning y borrado automático
+    toast.warning('🧹 Lienzo limpiado', 'Todos los nodos han sido eliminados', {
+      duration: 3000
     });
+    onClear?.();
+    toast.hideAll();
   });
 
   file.addEventListener('change', async () => {

@@ -3,6 +3,55 @@ Todas las modificaciones relevantes de este proyecto se documentarán en este ar
 
 Este archivo sigue el formato de **[Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/)** y la estrategia de versionado **[SemVer](https://semver.org/lang/es/)**.
 
+## [Unreleased] - 2025-09-07
+
+### UX IMPROVEMENTS & PHASE 3 PREPARATION
+*Commit: Sistema UX mejorado con ENABLED_TYPES completo y layout responsivo*
+
+#### Enhanced - Sistema de Habilitación de Funciones
+- **ENABLED_TYPES Sistema Completo**: 
+  - **39 acciones habilitadas** de las 47 totales disponibles
+  - **Auto-discovery forzado** para asegurar carga completa antes del filtrado
+  - **Mapeo Backend↔Frontend** correcto de IDs de acciones
+  - **11 funciones de control de flujo avanzado** ahora visibles:
+    - `try_catch_finally`, `bucle_for_rango`, `bucle_for_lista`
+    - `condicional_multiple`, `condicional_and_or`, `esperar_condicion`
+    - `validar_variable`, `delay_dinamico`, `esperar_hasta_hora`
+    - `programar_ejecucion`, `interrumpir_flujo`, `repetir_hasta`
+  - **Filtrado inteligente**: Excluye 8 acciones web específicas manteniendo funcionalidad completa
+
+#### Fixed - Layout y UX Issues
+- **Layout CSS responsivo mejorado**:
+  - **Grid de altura fija**: `height: calc(100vh - 64px)` evita expansión no deseada
+  - **Sidebar con scroll independiente**: `overflow-y: auto; height: 100%`
+  - **Canvas y consola estáticos**: No se desplazan al expandir categorías del sidebar
+  - **Panel derecho fijo**: Mantiene posición con scroll interno independiente
+- **Toast System repositioning**: 
+  - Posición cambiada de `top-right` a `bottom-right`
+  - Animaciones actualizadas para movimiento hacia arriba
+  - Toasts de éxito innecesarios eliminados
+- **Export con nombre personalizado**: Prompt para filenames customizados
+- **Canvas clearing mejorado**: Warning toast sin confirmación modal
+
+#### Added - Categorías UI Expandidas
+- **🎮 Control de Flujo Avanzado** (11): Nueva categoría completamente funcional
+- **📊 Procesamiento Avanzado** (11): Análisis y transformación de datos
+- **📂 Gestión de Archivos** (4): Operaciones completas de archivos
+- **💬 Preguntar al Usuario** (2): Diálogos interactivos
+- **📖 Leer Información** (2): Lectura de fuentes de datos
+- **💾 Guardar Información** (3): Exportación en múltiples formatos
+- **🔄 Control y Decisiones** (1): Lógica básica de flujo
+- **🏁 Finalización** (1): Limpieza y cierre de procesos
+
+#### Technical Details
+- **Frontend Catalog Sync**: IDs mapeados correctamente entre backend ActionRegistry y frontend FUNCTION_CATALOG
+- **Scroll Behavior**: Cada panel maneja contenido independientemente sin afectar layout global
+- **Auto-discovery Timing**: `get_enabled_types()` ejecutado después de registro completo de 47 acciones
+- **Production Ready**: Sistema filtrado elimina funciones experimentales, mantiene estabilidad
+
+### PHASE 2 COMPLETE - Sistema Listo para Phase 3
+*Base completamente estable con 39 acciones operativas y UX optimizada*
+
 ## [Unreleased] - 2025-09-06
 
 ### CRITICAL FIXES - Sistema Completamente Estable
@@ -138,7 +187,7 @@ Este archivo sigue el formato de **[Keep a Changelog](https://keepachangelog.com
 - Primera versión estable con:
   - Canvas con nodos, puertos y edges (Bézier).
   - Import/Export de flujos (JSON).
-  - Catálogo filtrado por `ENABLED_TYPES` desde backend.
+  - Catálogo filtrado por `ENABLED_TYPES` desde backend (39/47 acciones habilitadas).
   - Acciones disponibles: Pausa, Variable Set/Get, Carpeta: Listar/Crear, Archivo: Mover/Copiar/Borrar, Excel: Leer rango, Escribir CSV/Excel, Excel: Crear hoja.
   - Consola integrada (Run/Stop/Clear) y `notify_progress` para preview.
 
