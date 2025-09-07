@@ -8,6 +8,39 @@ function hostLayer() {
   return document.getElementById('lienzo') || document.getElementById('workspace');
 }
 
+/**
+ * Determina el tipo de forma para un nodo según su ID de función
+ */
+function getNodeShape(actionId) {
+  if (!actionId) return 'circle';
+  
+  // Funciones de control - triángulos
+  if (actionId === 'condicional_si' || actionId === 'bucle_mientras' || 
+      actionId.includes('condicional') || actionId.includes('bucle') || 
+      actionId.includes('try_catch') || actionId.includes('validar_variable')) {
+    return 'triangle';
+  }
+  
+  // Funciones de tiempo - rombo
+  if (actionId === 'pausa' || actionId.includes('delay') || 
+      actionId.includes('esperar') || actionId.includes('programar')) {
+    return 'diamond';
+  }
+  
+  // Funciones de procesamiento - hexágonos
+  if (actionId.includes('filtrar') || actionId.includes('transformar') || 
+      actionId.includes('agrupar') || actionId.includes('calcular') || 
+      actionId.includes('normalizar') || actionId.includes('unir') || 
+      actionId.includes('concatenar') || actionId.includes('pivotar') || 
+      actionId.includes('eliminar_duplicados') || actionId.includes('ordenar_avanzado') || 
+      actionId.includes('validar_datos')) {
+    return 'hexagon';
+  }
+  
+  // Por defecto - círculo (forma normal)
+  return 'circle';
+}
+
 export function createNode(step, { onMove, onRemove, getDef }) {
   const host = hostLayer();
   if (!host) throw new Error('No se encontró #lienzo ni #workspace para montar nodos');
@@ -18,6 +51,7 @@ export function createNode(step, { onMove, onRemove, getDef }) {
   el.dataset.stepId = step.id;        // helper
   el.style.left = `${step.pos.x}px`;
   el.style.top  = `${step.pos.y}px`;
+  
   el.innerHTML = `
     <div class="node-header">
       <span class="node-title">${step.label}</span>

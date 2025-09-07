@@ -5,6 +5,32 @@ Este archivo sigue el formato de **[Keep a Changelog](https://keepachangelog.com
 
 ## [Unreleased] - 2025-09-07
 
+### NODE SHAPE SYSTEM & PERFORMANCE OPTIMIZATION
+*Commit: Sistema de formas de nodos optimizado con clasificación visual inteligente*
+
+#### Enhanced - Sistema Visual de Nodos
+- **Clasificación Visual Inteligente**:
+  - **Sistema de formas específicas por tipo**: Solo nodos condicionales y bucles reciben forma triangular distintiva
+  - **Preservación de apariencia original**: Todos los nodos básicos (pausa, ordenar, leer, etc.) mantienen forma circular estándar
+  - **Identificación específica**: `condicional_si`, `condicional_multiple`, `bucle_mientras`, `bucle_for_lista`, `bucle_for_rango` → triángulos sutiles
+  - **Simplificación CSS**: Eliminadas formas complejas innecesarias (diamond, hexagon, square), manteniendo solo triangle/circle
+
+#### Fixed - Performance y Coordinación
+- **Sistema de coordenadas corregido**:
+  - **Estructura unificada**: Transición completa de `step.x/y` a `step.pos.x/y` en todo el codebase
+  - **Funciones actualizadas**: `createNode()`, `loadFlowJSON()`, `buildFlowJSON()`, `updateCanvasSize()`
+  - **Auto-conexión restaurada**: SVG edge rendering funcionando correctamente con nuevas coordenadas
+- **Optimización de arrastre**:
+  - **requestAnimationFrame implementation**: Drag operations optimizadas para 60fps smooth rendering
+  - **Performance monitoring**: Eliminación de lag durante movimiento de nodos en canvas
+  - **Background process handling**: Drag fluido sin bloqueo de UI
+
+#### Technical Details
+- **getNodeShape() Function**: Lógica ultra-restrictiva que solo clasifica tipos específicos de control de flujo
+- **CSS Architecture**: Separación limpia entre `estilos.css` (general) y `nodes.css` (node-specific)
+- **Visual Indicators**: Bordes coloridos sutiles (rojo para condicionales) sin afectar usabilidad
+- **Coordinate System**: Estructura `step.pos.{x,y}` consistente en serialización, drag, y rendering
+
 ### UX IMPROVEMENTS & PHASE 3 PREPARATION
 *Commit: Sistema UX mejorado con ENABLED_TYPES completo y layout responsivo*
 

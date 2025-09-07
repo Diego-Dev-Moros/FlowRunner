@@ -10,6 +10,21 @@ import { setupConsole } from './ui/console.js';
 import { renderToolbar } from './ui/toolbar.js';
 import errorHandler from './ui/error-handler.js';
 
+// Función para determinar la forma del nodo basándose en su tipo
+function getNodeShape(actionId) {
+  if (!actionId) return 'circle';
+  
+  // SOLO Condicionales y bucles específicos - triángulos
+  if (actionId === 'condicional_si' || actionId === 'condicional_multiple' ||
+      actionId === 'bucle_mientras' || actionId === 'bucle_for_lista' ||
+      actionId === 'bucle_for_rango') {
+    return 'triangle';
+  }
+  
+  // TODOS los demás nodos (incluyendo pausa, ordenar, leer, etc.) - círculo normal
+  return 'circle';
+}
+
 document.addEventListener('DOMContentLoaded', init);
 
 let uiConsole;
@@ -156,8 +171,10 @@ function createNode(def, x = 80, y = 80) {
     id,
     typeId: def.id,
     label: def.nombre || def.id,
-    x: Math.max(16, x - 100),
-    y: Math.max(16, y - 20),
+    pos: {
+      x: Math.max(16, x - 100),
+      y: Math.max(16, y - 20)
+    },
     props: defaultProps(def.schema),
   };
 
@@ -183,8 +200,16 @@ function mountNode(step, def) {
   const el = document.createElement('div');
   el.className = 'node';
   el.id = step.id;
-  el.style.left = `${step.x}px`;
-  el.style.top  = `${step.y}px`;
+  el.style.left = `${step.pos.x}px`;
+  el.style.top  = `${step.pos.y}px`;
+
+  // Determinar forma del nodo basado en el ID
+  const actionId = step.typeId || def.id;
+  const nodeShape = getNodeShape(actionId);
+  
+  if (nodeShape !== 'circle') {
+    el.classList.add(`shape-${nodeShape}`);
+  }
 
   // Header
   const header = document.createElement('div');
@@ -282,18 +307,28 @@ function enableDrag(el, step) {
   const header = el.querySelector('.node-header');
   let dragging = false;
   let sx = 0, sy = 0, bx = 0, by = 0;
+  let animationId = null;
 
   const onMouseMove = (e) => {
     if (!dragging) return;
-    // Compensar zoom para que el desplazamiento sea 1:1 visual
-    const dx = (e.clientX - sx) / zoom;
-    const dy = (e.clientY - sy) / zoom;
-    step.x = Math.max(8, bx + dx);
-    step.y = Math.max(8, by + dy);
-    el.style.left = `${step.x}px`;
-    el.style.top  = `${step.y}px`;
-    updateCanvasSize();
-    edges.renderEdges();
+    
+    // Cancelar frame anterior si existe
+    if (animationId) {
+      cancelAnimationFrame(animationId);
+    }
+    
+    // Programar actualización en el próximo frame
+    animationId = requestAnimationFrame(() => {
+      const dx = (e.clientX - sx) / zoom;
+      const dy = (e.clientY - sy) / zoom;
+      step.pos.x = Math.max(8, bx + dx);
+      step.pos.y = Math.max(8, by + dy);
+      el.style.left = `${step.pos.x}px`;
+      el.style.top  = `${step.pos.y}px`;
+      
+      // Solo actualizar edges al final del movimiento para mejor performance
+      animationId = null;
+    });
   };
 
   const onMouseUp = () => {
@@ -302,6 +337,14 @@ function enableDrag(el, step) {
     document.body.style.userSelect = '';
     window.removeEventListener('mousemove', onMouseMove);
     window.removeEventListener('mouseup', onMouseUp);
+    
+    // Cancelar cualquier animación pendiente
+    if (animationId) {
+      cancelAnimationFrame(animationId);
+      animationId = null;
+    }
+    
+    // Actualizar una vez al final
     updateCanvasSize();
     edges.renderEdges();
 
@@ -312,7 +355,7 @@ function enableDrag(el, step) {
     e.preventDefault();
     dragging = true;
     sx = e.clientX; sy = e.clientY;
-    bx = step.x;    by = step.y;
+    bx = step.pos.x; by = step.pos.y;
     document.body.style.userSelect = 'none';
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseup', onMouseUp);
@@ -525,7 +568,7 @@ function buildFlowJSON() {
       typeId: s.typeId,
       type: s.typeId,  // Agregar propiedad 'type' que espera el backend
       nombre: s.label,
-      position: { x: Math.round(s.x), y: Math.round(s.y) },
+      position: { x: Math.round(s.pos.x), y: Math.round(s.pos.y) },
       props: s.props || {},
     })),
     edges: state.edges.map(e => ({ from: e.from.step, to: e.to.step })),
@@ -573,8 +616,10 @@ function loadFlowJSON(data) {
         id: s.id,
         typeId: typeId,
         label: s.nombre || def.nombre || s.typeId,
-        x: s.position?.x ?? (100 + (validSteps * 200)),
-        y: s.position?.y ?? (100 + (validSteps * 80)),
+        pos: {
+          x: s.position?.x ?? s.pos?.x ?? s.x ?? (100 + (validSteps * 200)),
+          y: s.position?.y ?? s.pos?.y ?? s.y ?? (100 + (validSteps * 80))
+        },
         props: { ...defaultProps(def.schema), ...(s.props || {}) },
       };
       state.steps.push(step);
@@ -661,15 +706,17 @@ function updateCanvasSize() {
   const svg    = document.getElementById('svgEdges');
   const marginX = 400, marginY = 300;
 
-  const maxX = state.steps.reduce((m,s) => Math.max(m, s.x + 260), 800);
-  const maxY = state.steps.reduce((m,s) => Math.max(m, s.y + 160), 600);
+  const maxX = state.steps.reduce((m,s) => Math.max(m, (s.pos?.x || s.x || 0) + 260), 800);
+  const maxY = state.steps.reduce((m,s) => Math.max(m, (s.pos?.y || s.y || 0) + 160), 600);
 
   lienzo.style.width  = `${maxX + marginX}px`;
   lienzo.style.height = `${maxY + marginY}px`;
 
-  svg.setAttribute('width',  maxX + marginX);
-  svg.setAttribute('height', maxY + marginY);
-  svg.setAttribute('viewBox', `0 0 ${maxX + marginX} ${maxY + marginY}`);
+  if (svg) {
+    svg.setAttribute('width',  maxX + marginX);
+    svg.setAttribute('height', maxY + marginY);
+    svg.setAttribute('viewBox', `0 0 ${maxX + marginX} ${maxY + marginY}`);
+  }
 }
 
 // centra la vista en un nodo (ajustando por el zoom actual)

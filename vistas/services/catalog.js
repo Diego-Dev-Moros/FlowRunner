@@ -364,8 +364,28 @@ export const FUNCTION_CATALOG = [
   },
 
   // =========================
-  // �🔄 CONTROL Y DECISIONES (preparado para futuras funciones)
+  // 🔄 CONTROL Y DECISIONES 
   // =========================
+  {
+    id: 'condicional_si',
+    nombre: 'Condición Si/Entonces',
+    categoria: 'logica',
+    descripcion: 'Ejecuta acciones diferentes según una condición (if/else).',
+    schema: [
+      { key: 'condicion', label: 'Condición', type: 'text', required: true, placeholder: 'edad >= 18' },
+      { key: 'variable_resultado', label: 'Variable resultado', type: 'text', required: false, placeholder: 'es_mayor' }
+    ]
+  },
+  {
+    id: 'bucle_mientras',
+    nombre: 'Repetir Mientras',
+    categoria: 'logica',
+    descripcion: 'Repite acciones mientras se cumpla una condición (while loop).',
+    schema: [
+      { key: 'condicion', label: 'Condición', type: 'text', required: true, placeholder: 'contador < 10' },
+      { key: 'max_iteraciones', label: 'Máximo iteraciones', type: 'number', required: false, placeholder: '100' }
+    ]
+  },
   {
     id: 'pausa',
     nombre: 'Hacer una pausa',

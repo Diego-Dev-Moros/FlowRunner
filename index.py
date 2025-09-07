@@ -6,6 +6,7 @@ from modules.core import FlowExecutor, ActionRegistry
 import modules.actions  # Esto iniciará el auto-registro
 from modules.browser_config import create_browser_config
 from modules.utils.logging import FlowLogger
+from modules.utils.mappers import get_enabled_types
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 eel.init(BASE_DIR, allowed_extensions=['.js', '.html', '.css'])
@@ -92,104 +93,6 @@ def cancel_run():
 def pause_run():
     print('PAUSE_RUN (pendiente)')
     return True
-
-@eel.expose
-def get_enabled_types():
-    try:
-        # Asegurar que el auto-descubrimiento esté completo
-        if not ActionRegistry._initialized:
-            ActionRegistry.auto_discover_actions()
-        
-        # ENABLED_TYPES: Whitelist de acciones habilitadas para producción
-        # Estos IDs deben coincidir EXACTAMENTE con los IDs del catálogo frontend
-        ENABLED_TYPES = {
-            # === DATOS BÁSICOS ===
-            'variable_set', 'variable_get', 'ordenar_info',
-            
-            # === LECTURA ===
-            'excel_leer_rango', 'carpeta_listar',
-            
-            # === ESCRITURA ===
-            'escribir_csv', 'escribir_excel', 'escribir_txt',
-            
-            # === ARCHIVOS ===
-            'carpeta_crear', 'archivo_mover', 'archivo_copiar', 'archivo_borrar',
-            
-            # === DIALOGOS ===
-            'dialogo_seleccionar_archivo', 'dialogo_seleccionar_carpeta',
-            
-            # === CONTROL BÁSICO ===
-            'pausa',
-            
-            # === CONTROL DE FLUJO AVANZADO (Phase 2) ===
-            'bucle_for_rango', 'bucle_for_lista', 'repetir_hasta', 'interrumpir_flujo',
-            'condicional_multiple', 'condicional_and_or', 'esperar_condicion',
-            'try_catch_finally', 'validar_variable',
-            'delay_dinamico', 'esperar_hasta_hora', 'programar_ejecucion',
-            
-            # === PROCESAMIENTO AVANZADO (Phase 1) ===
-            'filtrar_dataframe', 'transformar_columnas', 'agrupar_datos', 
-            'eliminar_duplicados', 'ordenar_avanzado', 'pivotar_tabla',
-            'calcular_estadisticas', 'normalizar_datos', 'unir_datasets',
-            'concatenar_datasets', 'validar_datos',
-            
-            # === FINALIZACION ===
-            'finalizar_todo'
-        }
-        
-        # Obtener todas las acciones registradas
-        all_actions = ActionRegistry.get_enabled_types()
-        
-        # El catálogo frontend usa IDs diferentes que el backend
-        # Necesitamos mapear los IDs del backend a los del frontend
-        BACKEND_TO_FRONTEND_MAP = {
-            # Variables  
-            'variables_listar': 'ordenar_info',  # aproximación
-            
-            # Lectura
-            'excel_leer_rango_action': 'excel_leer_rango',
-            'carpeta_listar_action': 'carpeta_listar',
-            
-            # Escritura
-            'escribir_csv_action': 'escribir_csv',
-            'escribir_excel_action': 'escribir_excel', 
-            'escribir_txt_action': 'escribir_txt',
-            
-            # Archivos
-            'crear_carpeta_action': 'carpeta_crear',
-            'mover_archivo_action': 'archivo_mover',
-            'copiar_archivo_action': 'archivo_copiar',
-            'eliminar_archivo_action': 'archivo_borrar',
-            
-            # Finalización
-            'finalizar_todo_action': 'finalizar_todo'
-        }
-        
-        # Convertir IDs de backend a frontend cuando sea necesario
-        frontend_actions = []
-        processed_ids = set()  # Para evitar duplicados
-        
-        for backend_id in all_actions:
-            frontend_id = BACKEND_TO_FRONTEND_MAP.get(backend_id, backend_id)
-            if frontend_id in ENABLED_TYPES and frontend_id not in processed_ids:
-                frontend_actions.append(frontend_id)
-                processed_ids.add(frontend_id)
-        
-        # También incluir los que ya coinciden directamente
-        for action in all_actions:
-            if action in ENABLED_TYPES and action not in processed_ids:
-                frontend_actions.append(action)
-                processed_ids.add(action)
-        
-        print(f"[ENABLED_TYPES] Total backend: {len(all_actions)}, Habilitadas frontend: {len(frontend_actions)}")
-        print(f"[ENABLED_TYPES] IDs enviados al frontend: {sorted(frontend_actions)}")
-        
-        return frontend_actions
-        
-    except Exception as e:
-        print(f"Error obteniendo tipos habilitados: {e}")
-        # Fallback: devolver lista vacía
-        return []
 
 # -------------------------
 # Configuración de navegador modularizada
