@@ -6,7 +6,6 @@ from modules.core import FlowExecutor, ActionRegistry
 import modules.actions  # Esto iniciará el auto-registro
 from modules.browser_config import create_browser_config
 from modules.utils.logging import FlowLogger
-from modules.utils.mappers import get_enabled_types
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 eel.init(BASE_DIR, allowed_extensions=['.js', '.html', '.css'])
@@ -25,9 +24,9 @@ def log_frontend_error(error_data):
     """Log errores del frontend al sistema de logging"""
     try:
         logger.log_error(
-            error=f"[FRONTEND] {error_data.get('message', 'Error desconocido')}",
+            message=f"[FRONTEND] {error_data.get('message', 'Error desconocido')}",
+            error_type=error_data.get('type', 'frontend_error'),
             context={
-                'error_type': error_data.get('type', 'frontend_error'),
                 'filename': error_data.get('filename'),
                 'line': error_data.get('line'),
                 'column': error_data.get('column'),
@@ -45,9 +44,8 @@ def log_frontend_error(error_data):
 def log_frontend_warning(warning_data):
     """Log warnings del frontend al sistema de logging"""
     try:
-        logger.log_user(
+        logger.log_user_activity(
             f"[FRONTEND WARNING] {warning_data.get('message', 'Warning desconocido')}",
-            level="WARNING",
             context={
                 'type': warning_data.get('type', 'frontend_warning'),
                 'url': warning_data.get('url'),
@@ -93,6 +91,16 @@ def cancel_run():
 def pause_run():
     print('PAUSE_RUN (pendiente)')
     return True
+
+@eel.expose
+def get_enabled_types():
+    try:
+        # Usar el nuevo registry para obtener todos los tipos registrados
+        return ActionRegistry.get_enabled_types()
+    except Exception as e:
+        print(f"Error obteniendo tipos habilitados: {e}")
+        # Fallback: devolver lista vacía
+        return []
 
 # -------------------------
 # Configuración de navegador modularizada

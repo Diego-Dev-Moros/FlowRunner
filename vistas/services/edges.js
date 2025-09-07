@@ -87,15 +87,9 @@ export function renderEdges() {
   if (!svg) return;
 
   const host = hostLayer();
-  if (!host) return;
-  
-  // Validar dimensiones antes de usarlas
-  const width = Math.max(host.scrollWidth || 0, host.clientWidth || 0, 800);
-  const height = Math.max(host.scrollHeight || 0, host.clientHeight || 0, 600);
-  
-  svg.setAttribute('width', width);
-  svg.setAttribute('height', height);
-  svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  svg.setAttribute('width', host.scrollWidth);
+  svg.setAttribute('height', host.scrollHeight);
+  svg.setAttribute('viewBox', `0 0 ${host.scrollWidth} ${host.scrollHeight}`);
 
   const g = svg.querySelector('#edges');
   g.innerHTML = '';
